@@ -1,4 +1,7 @@
 import argparse
+import sys
+
+from lexer import Lexer
 
 # Parses arguments and runs the program
 def main():
@@ -24,7 +27,9 @@ def main():
     )
     parser.parse_args()
 
-    print("There should be implementaion")
+    input = sys.stdin.read()
+    lexer = Lexer(input)
+    lexer.next()
 
 if __name__ == '__main__':
     main()
