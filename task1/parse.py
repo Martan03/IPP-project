@@ -2,6 +2,7 @@ import argparse
 import sys
 
 from lexer import Lexer
+from token import TokenType
 
 # Parses arguments and runs the program
 def main():
@@ -29,7 +30,14 @@ def main():
 
     input = sys.stdin.read()
     lexer = Lexer(input)
-    lexer.next()
+
+    token = lexer.next()
+    while token.type != TokenType.EOF:
+        print(token.type, end=' ')
+        for val in token.values:
+            print(val, end=' ')
+        print()
+        token = lexer.next()
 
 if __name__ == '__main__':
     main()

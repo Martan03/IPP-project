@@ -1,5 +1,6 @@
-import re
 import sys
+
+from token import Token, TokenType
 
 DATA_TYPES = {"int", "bool", "string"}
 STORE_TYPE = {"GF", "LF", "TF"}
@@ -17,10 +18,10 @@ class Lexer:
     # Gets next token
     def next(self):
         while self.cur_char is not None:
+            # New line
             if self.cur_char == '\n':
-                print("Newline")
                 self.next_char()
-                continue
+                return Token(TokenType.EOL)
 
             # Skips whitespace
             if self.cur_char.isspace():
@@ -33,7 +34,9 @@ class Lexer:
                 continue
 
             self.value = ""
-            self.read_literal()
+            return self.read_literal()
+
+        return Token(TokenType.EOF)
 
     # Gets next char in text
     def next_char(self):
@@ -64,7 +67,7 @@ class Lexer:
             self.value += self.cur_char
             self.next_char()
 
-        print("Literal: " + self.value)
+        return Token(TokenType.LIT, [self.value])
 
     # Reads variable
     def read_var(self):
@@ -81,8 +84,9 @@ class Lexer:
             self.value += self.cur_char
             self.next_char()
 
-        print("VarType: " + type + ", value: " + self.value)
+        return Token(TokenType.VAR, [type, self.value])
 
+    # Reads symbol
     def read_symb(self):
         type = self.value
         self.next_char()
@@ -92,4 +96,4 @@ class Lexer:
             self.value += self.cur_char
             self.next_char()
 
-        print("SymbType: " + type + ", value: " + self.value)
+        return Token(TokenType.SYMB, [type, self.value])
