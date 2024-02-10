@@ -26,9 +26,13 @@ class Parser:
 
     # Parses given text
     def parse(self):
+        # Skips new lines
+        while self.token.type == TokenType.EOL:
+            self.token = self.lexer.next()
+
         # Checks if code contains header
-        if (self.token.type != TokenType.LABEL and
-            self.token.value != "IPPcode24"):
+        if (self.token.type != TokenType.LABEL or
+            self.token.value != ".IPPcode24"):
             sys.exit(21)
 
         # Checks for new line after header
@@ -43,8 +47,8 @@ class Parser:
             self.token = self.lexer.next()
 
         dom = parseString(ET.tostring(self.xml))
-        xml_bytes = dom.toprettyxml(indent="    ", encoding="utf-8")
-        pretty_xml = xml_bytes.decode('utf-8')
+        xml_bytes = dom.toprettyxml(indent="    ", encoding="UTF-8")
+        pretty_xml = xml_bytes.decode('UTF-8')
         return pretty_xml
 
     # Parses line of code
@@ -71,7 +75,7 @@ class Parser:
             arg_cnt += 1
             arg_el = ET.SubElement(opcode_el, f"arg{arg_cnt}")
             arg_el.set("type", self.token.type.value)
-            arg_el.text = self.escape(self.token.value)
+            arg_el.text = self.token.value
             self.token = self.lexer.next()
 
         if arg_cnt > exp_arg_cnt:
@@ -79,12 +83,33 @@ class Parser:
 
         self.order += 1
 
-    def escape(self, text):
-        esc = {
-            "<": "&lt;",
-            ">": "&gt;",
-            "&": "&amp;",
-            '"': "&quot;",
-            "'": "&apos;",
-        }
-        return "".join(esc.get(c, c) for c in text)
+    def check_args(self, opcode):
+        # no args
+        if (opcode == "PUSHFRAME" or opcode == "POPFRAME" or
+            opcode == "RETURN" or opcode == "BREAK"):
+            ()
+        # var
+        elif (opcode == "DEFVAR" or opcode == "POPS"):
+            ()
+        # symb
+        elif (opcode == "PUSHS" or opcode == "WRITE" or opcode == "EXIT" or
+              opcode == "DPRINT"):
+            ()
+        # label
+        elif (opcode == "CALL" or opcode == "LABEL" or opcode == "JUMP"):
+            ()
+        # var symb
+        elif (opcode == "MOVE" or opcode == "NOT" or opcode == "INT2CHAR" or
+              opcode == "STRLEN" or opcode == "TYPE"):
+            ()
+        # var type
+        elif (opcode == "READ"):
+            ()
+        # var symb symb
+        elif (opcode == "ADD" or opcode == "SUB" or opcode == "MUL" or
+              opcode == "IDIV" or opcode == "LT" or opcode == "GT" or
+              opcode == "EQ" or opcode == "AND" or opcode == "OR" or
+              opcode == "STRI2INT" or opcode == "CONCAT" or
+              opcode == "GETCHAR" or opcode == "SETCHAR" or
+              opcode == "JUMPIFEQ" or opcode == "JUMPIFNEQ"):
+            ()

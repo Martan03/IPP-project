@@ -125,9 +125,7 @@ class Lexer:
 
     # Checks if value is bool
     def _check_bool(self, val):
-        if val != "true" or val != "false":
-            return False
-        return True
+        return val == "true" or val == "false"
 
     # Checks if value is int
     def _check_int(self, val):
