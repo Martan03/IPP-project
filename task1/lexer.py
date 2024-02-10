@@ -2,7 +2,7 @@ import sys
 
 from token import Token, TokenType
 
-DATA_TYPES = {"int", "bool", "string"}
+DATA_TYPES = {"int", "bool", "string", "nil"}
 STORE_TYPE = {"GF", "LF", "TF"}
 SPEC_CHARS = {'_', '-', '$', '&', '%', '*', '!', '?'}
 
@@ -21,7 +21,7 @@ class Lexer:
             # New line
             if self.cur_char == '\n':
                 self.next_char()
-                return Token(TokenType.EOL)
+                return Token(TokenType.EOL, '\n')
 
             # Skips whitespace
             if self.cur_char.isspace():
@@ -36,7 +36,7 @@ class Lexer:
             self.value = ""
             return self.read_literal()
 
-        return Token(TokenType.EOF)
+        return Token(TokenType.EOF, '')
 
     # Gets next char in text
     def next_char(self):
@@ -55,45 +55,56 @@ class Lexer:
     def read_literal(self):
         while self.cur_char is not None and not self.cur_char.isspace():
             if self.cur_char == '@':
-                if self.value in DATA_TYPES:
-                    return self.read_symb()
-                elif self.value in STORE_TYPE:
+                if self.value in STORE_TYPE:
                     return self.read_var()
                 else:
-                    # TODO: fix error message and error code
-                    sys.stderr.write("Invalid type")
-                    sys.exit(1)
+                    return self.read_symb()
 
             self.value += self.cur_char
             self.next_char()
 
-        return Token(TokenType.LIT, [self.value])
+        if self.value in DATA_TYPES:
+            return Token(TokenType.TYPE, self.value)
+
+        return Token(TokenType.LABEL, self.value)
 
     # Reads variable
     def read_var(self):
-        type = self.value
+        self.value += self.cur_char
         self.next_char()
 
         if not self.cur_char.isalpha() and self.cur_char not in SPEC_CHARS:
             sys.stderr.write("Invalid variable name")
             sys.exit(1)
 
-        self.value = self.cur_char
+        self.value += self.cur_char
         self.next_char()
         while self.cur_char is not None and not self.cur_char.isspace():
             self.value += self.cur_char
             self.next_char()
 
-        return Token(TokenType.VAR, [type, self.value])
+        return Token(TokenType.VAR, self.value)
 
     # Reads symbol
     def read_symb(self):
-        type = self.value
+        type_val = self.value
+        self.value = ""
         self.next_char()
 
-        self.value = ""
         while self.cur_char is not None and not self.cur_char.isspace():
             self.value += self.cur_char
             self.next_char()
 
-        return Token(TokenType.SYMB, [type, self.value])
+        type = TokenType.EOF
+        if type_val == "string":
+            type = TokenType.STRING
+        elif type_val == "int":
+            type = TokenType.INT
+        elif type_val == "bool":
+            type = TokenType.BOOL
+        elif type_val == "nil":
+            type = TokenType.NIL
+        else:
+            sys.exit(23)
+
+        return Token(type, self.value)

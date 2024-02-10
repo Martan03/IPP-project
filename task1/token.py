@@ -2,18 +2,21 @@ from enum import Enum
 
 # Token types
 class TokenType(Enum):
-    # Literal
-    LIT = 1
+    LABEL = "label"
     # Variable
-    VAR = 2
-    # Symbol
-    SYMB = 3
+    VAR = "var"
+    INT = "int"
+    BOOL = "bool"
+    STRING = "string"
+    NIL = "nil"
+    TYPE = "type"
     # End of line
-    EOL = 4
+    EOL = "eol"
     # End of file
-    EOF = 5
+    EOF = "eof"
 
 class Token:
-    def __init__(self, type, values=[]):
+    # Constructs new token of given type with given value
+    def __init__(self, type, value):
         self.type = type
-        self.values = values
+        self.value = value
