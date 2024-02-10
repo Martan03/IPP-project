@@ -1,3 +1,4 @@
+import re
 import sys
 
 from token import Token, TokenType
@@ -53,7 +54,9 @@ class Lexer:
 
     # Reads literal
     def read_literal(self):
-        while self.cur_char is not None and not self.cur_char.isspace():
+        while (self.cur_char is not None and
+               not self.cur_char.isspace() and
+               self.cur_char != '#'):
             if self.cur_char == '@':
                 if self.value in STORE_TYPE:
                     return self.read_var()
@@ -79,7 +82,9 @@ class Lexer:
 
         self.value += self.cur_char
         self.next_char()
-        while self.cur_char is not None and not self.cur_char.isspace():
+        while (self.cur_char is not None and
+               not self.cur_char.isspace() and
+               self.cur_char != '#'):
             self.value += self.cur_char
             self.next_char()
 
@@ -91,20 +96,46 @@ class Lexer:
         self.value = ""
         self.next_char()
 
-        while self.cur_char is not None and not self.cur_char.isspace():
+        while (self.cur_char is not None and
+               not self.cur_char.isspace() and
+               self.cur_char != '#'):
             self.value += self.cur_char
             self.next_char()
 
         type = TokenType.EOF
+        valid = True
         if type_val == "string":
             type = TokenType.STRING
         elif type_val == "int":
+            valid = self._check_int(self.value)
             type = TokenType.INT
         elif type_val == "bool":
+            valid = self._check_bool(self.value)
             type = TokenType.BOOL
         elif type_val == "nil":
+            valid = self._check_nil(self.value)
             type = TokenType.NIL
         else:
             sys.exit(23)
 
+        if not valid:
+            sys.exit(22)
+
         return Token(type, self.value)
+
+    # Checks if value is bool
+    def _check_bool(self, val):
+        if val != "true" or val != "false":
+            return False
+        return True
+
+    # Checks if value is int
+    def _check_int(self, val):
+        pattern = r'^([+-]?)(0o[0-7]+|0x[0-9a-fA-F]+|\d+)$'
+        return re.match(pattern, val) is not None
+
+    # Checks if value is nil
+    def _check_nil(self, val):
+        if val != "nil":
+            return False
+        return True
