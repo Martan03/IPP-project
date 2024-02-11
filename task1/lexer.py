@@ -69,6 +69,10 @@ class Lexer:
         if self.value in DATA_TYPES:
             return Token(TokenType.TYPE, self.value)
 
+        if (self.value and not self.value[0].isalpha() and
+            self.value[0] not in SPEC_CHARS):
+            return Token(TokenType.NALABEL, self.value)
+
         return Token(TokenType.LABEL, self.value)
 
     # Reads variable

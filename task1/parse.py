@@ -6,38 +6,42 @@ from token import TokenType
 
 from parsing import Parser
 
-# Gets return codes for help
-def get_ret_codes():
-    return """Return codes:
-0-9 : correct execution
+# Displays help
+def show_help():
+    print("""IPPcode24 Parser
+Usage: python parse.py [options]
+
+Options:
+--help : displays this help and exits
+
+Return codes:
 10  : invalid parameters
-11  : input file error
-12  : output file error
-31  : invalid source XML format
-32  : invalid source structure
-52  : semantic error
-53  : runtime error - bad operand types
-54  : runtime error - non-existent variable
-55  : runtime error - non-existent frame
-56  : runtime error - missing value
-57  : runtime error - bad operand value
-58  : runtime error - bad string operation
-88  : integration error
-99  : internal error
-"""
+11  : error reading from stdin
+21  : invalid code header
+22  : invalid or not known instruction in code
+23  : other lexical or syntax error""")
+
+# Reads code from stdin and make parser parse it
+def parse_input():
+    # Gets code from stdin
+    try:
+        input = sys.stdin.read()
+    except IOError as e:
+        sys.exit(11)
+
+    # Parses the code
+    parser = Parser(input)
+    print(parser.parse())
 
 # Parses arguments and runs the program
 def main():
-    parser = argparse.ArgumentParser(
-        description='IPPcode24 Interpreter',
-        epilog=get_ret_codes(),
-        formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.parse_args()
-
-    input = sys.stdin.read()
-    parser = Parser(input)
-    print(parser.parse())
+    if len(sys.argv) == 1:
+        parse_input()
+    elif (len(sys.argv) == 2 and
+          (sys.argv[1] == "--help" or sys.argv[1] == "-h")):
+        show_help()
+    else:
+        sys.exit(10)
 
 if __name__ == '__main__':
     main()
