@@ -41,12 +41,14 @@ class Parser:
         # Checks if code contains header
         if (self.token.type != TokenType.NALABEL or
             self.token.value.lower() != ".ippcode24"):
+            print("error: missing header", file=sys.stderr)
             sys.exit(21)
 
         # Checks for new line after header or end of file
         self.token = self.lexer.next()
         if (self.token.type != TokenType.EOL and
             self.token.type != TokenType.EOF):
+            print("error: missing newline after header", file=sys.stderr)
             sys.exit(21)
 
     # Parses line of code
@@ -59,8 +61,7 @@ class Parser:
         opcode = self.token.value.upper()
         if (self.token.type != TokenType.LABEL or
             opcode not in INSTRUCTIONS):
-            print(self.token.type)
-            print(self.token.value)
+            print("error: invalid instruction: " + opcode, file=sys.stderr)
             sys.exit(22)
 
         # Creates instruction element in XML
@@ -73,6 +74,7 @@ class Parser:
         self.token = self.lexer.next()
         for i, arg_type in enumerate(exp_args):
             if not self._is_arg_valid(arg_type):
+                print("error: invalid argument type", file=sys.stderr)
                 sys.exit(23)
             # Creates arg element for instruction in XML
             arg_el = ET.SubElement(opcode_el, f"arg{i + 1}")
@@ -83,6 +85,7 @@ class Parser:
         # Checks if new line or end of file occures after instruction
         if (self.token.type != TokenType.EOL and
             self.token.type != TokenType.EOF):
+            print("error: no new line after instruction", file=sys.stderr)
             sys.exit(23)
 
         self.order += 1

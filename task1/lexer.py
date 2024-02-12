@@ -81,8 +81,8 @@ class Lexer:
         self.next_char()
 
         if not self.cur_char.isalpha() and self.cur_char not in SPEC_CHARS:
-            sys.stderr.write("Invalid variable name")
-            sys.exit(1)
+            print("error: invalid variable name", file=sys.stderr)
+            sys.exit(23)
 
         self.value += self.cur_char
         self.next_char()
@@ -120,9 +120,13 @@ class Lexer:
             valid = self._check_nil(self.value)
             type = TokenType.NIL
         else:
+            print("error: invalid data type: " + type_val, file=sys.stderr)
             sys.exit(23)
 
         if not valid:
+            print(
+                "error: invalid symbol value: "  + self.value, file=sys.stderr
+            )
             sys.exit(22)
 
         return Token(type, self.value)

@@ -27,6 +27,7 @@ def parse_input():
     try:
         input = sys.stdin.read()
     except IOError as e:
+        print("error: reading input", file=sys.stderr)
         sys.exit(11)
 
     # Parses the code
@@ -41,6 +42,7 @@ def main():
           (sys.argv[1] == "--help" or sys.argv[1] == "-h")):
         show_help()
     else:
+        print("error: invalid argument", file=sys.stderr)
         sys.exit(10)
 
 if __name__ == '__main__':
