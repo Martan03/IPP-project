@@ -73,12 +73,13 @@ class Parser:
         exp_args = INSTRUCTIONS[opcode]
         self.token = self.lexer.next()
         for i, arg_type in enumerate(exp_args):
-            if not self._is_arg_valid(arg_type):
+            (valid, t) = self._is_arg_valid(arg_type)
+            if not valid:
                 print("error: invalid argument type", file=sys.stderr)
                 sys.exit(23)
             # Creates arg element for instruction in XML
             arg_el = ET.SubElement(opcode_el, f"arg{i + 1}")
-            arg_el.set("type", self.token.type.value)
+            arg_el.set("type", t)
             arg_el.text = self.token.value
             self.token = self.lexer.next()
 
@@ -93,17 +94,21 @@ class Parser:
     # Checks if current token is correct type
     def _is_arg_valid(self, arg_type):
         if arg_type == "var" and self.token.type == TokenType.VAR:
-            return True
+            return (True, self.token.type.value)
         elif arg_type == "symb" and self._is_symbol(self.token.type):
-            return True
-        elif arg_type == "label" and self.token.type == TokenType.LABEL:
-            return True
+            return (True, self.token.type.value)
+        elif arg_type == "label" and self._is_label(self.token.type):
+            return (True, "label")
         elif arg_type == "type" and self.token.type == TokenType.TYPE:
-            return True
-        return False
+            return (True, self.token.type.value)
+        return (False, None)
 
     # Checks if given type is symbol
     def _is_symbol(self, type):
         return (type == TokenType.VAR or type == TokenType.INT or
                 type == TokenType.BOOL or type == TokenType.STRING or
                 type == TokenType.NIL)
+
+    # Checks if given type is label
+    def _is_label(self, type):
+        return (type == TokenType.TYPE or type == TokenType.LABEL)

@@ -1,9 +1,6 @@
 #!/usr/bin/python3
 import sys
 
-from lexer import Lexer
-from token import TokenType
-
 from parsing import Parser
 
 # Displays help

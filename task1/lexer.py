@@ -127,7 +127,7 @@ class Lexer:
             print(
                 "error: invalid symbol value: "  + self.value, file=sys.stderr
             )
-            sys.exit(22)
+            sys.exit(23)
 
         return Token(type, self.value)
 
