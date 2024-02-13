@@ -142,6 +142,4 @@ class Lexer:
 
     # Checks if value is nil
     def _check_nil(self, val):
-        if val != "nil":
-            return False
-        return True
+        return val == "nil"
