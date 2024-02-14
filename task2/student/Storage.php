@@ -15,6 +15,8 @@ class Storage {
     private ?array $temp;
     private array $queue;
 
+    private array $labels;
+
     /**
      * Constructs new Storage
      */
@@ -23,6 +25,8 @@ class Storage {
         $this->local = [];
         $this->temp = null;
         $this->queue = [];
+
+        $this->labels = [];
     }
 
     /**
@@ -39,11 +43,17 @@ class Storage {
         ?string $type,
         mixed $value
     ): bool {
-        return match ($frame) {
-            "GF" => $this->addGlobal($name, $type, $value),
-            "LF" => $this->addLocal($name, $type, $value),
-            "TF" => $this->addTemp($name, $type, $value),
+        $storage = match ($frame) {
+            "GF" => $this->global,
+            "LF" => $this->local,
+            "TF" => $this->temp,
         };
+
+        if (!isset($storage[$name]))
+            return false;
+
+        $storage[$name] = new StorageItem($type, $value);
+        return true;
     }
 
     /**
@@ -54,9 +64,9 @@ class Storage {
      */
     public function get(string $frame, string $name): StorageItem {
         return match ($frame) {
-            "GF" => $this->getGlobal($name),
-            "LF" => $this->getLocal($name),
-            "TF" => $this->getTemp($name),
+            "GF" => $this->global[$name],
+            "LF" => $this->local[$name],
+            "TF" => $this->temp[$name],
         };
     }
 
@@ -92,47 +102,24 @@ class Storage {
         $this->temp = array_shift($this->queue);
     }
 
-    private function addGlobal(
-        string $name,
-        ?string $type,
-        mixed $value
-    ): bool {
-        if (isset($this->global[$name]))
+    /**
+     * Adds new label to the labels array
+     * @param string $name name of the label
+     * @param int $pos position of the label (instruction number)
+     */
+    public function addLabel(string $name, int $pos): bool {
+        if (isset($this->labels[$name]))
             return false;
-
-        $this->global[$name] = new StorageItem($type, $value);
+        $this->labels[$name] = $pos;
         return true;
     }
 
-    private function addLocal(
-        string $name,
-        ?string $type,
-        mixed $value
-    ): bool {
-        if (isset($this->local[$name]))
-            return false;
-
-        $this->local[$name] = new StorageItem($type, $value);
-        return true;
-    }
-
-    private function addTemp(string $name, ?string $type, mixed $value): bool {
-        if (isset($this->temp[$name]))
-            return false;
-
-        $this->temp[$name] = new StorageItem($type, $value);
-        return true;
-    }
-
-    private function getGlobal(string $name): StorageItem {
-        return $this->global[$name];
-    }
-
-    private function getLocal(string $name): StorageItem {
-        return $this->local[$name];
-    }
-
-    private function getTemp(string $name): StorageItem {
-        return $this->temp[$name];
+    /**
+     * Gets label by its name
+     * @param string $name name of the label to get
+     * @return ?int returns position of found label, else null
+     */
+    public function getLabel(string $name): ?int {
+        return $this->labels[$name];
     }
 }
