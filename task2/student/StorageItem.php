@@ -9,7 +9,7 @@ namespace IPP\Student;
  * Class that defines Storage item
  */
 class StorageItem {
-    private string $type;
+    private ?string $type;
     private mixed $value;
 
     /**
@@ -17,7 +17,7 @@ class StorageItem {
      * @param string $type type of the item
      * @param string $value value of the item
      */
-    public function __construct(string $type, mixed $value) {
+    public function __construct(?string $type, mixed $value) {
         $this->type = $type;
         $this->value = $value;
     }
@@ -26,7 +26,7 @@ class StorageItem {
      * Gets type of the storage item
      * @return string storage item type
      */
-    public function getType(): string {
+    public function getType(): ?string {
         return $this->type;
     }
 

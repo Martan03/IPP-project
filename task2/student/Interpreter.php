@@ -11,7 +11,7 @@ use IPP\Core\Settings;
 class Interpreter extends AbstractInterpreter
 {
     private array $instructions;
-    private array $storage;
+    private Storage $storage;
 
     public function execute(): int
     {
@@ -22,8 +22,14 @@ class Interpreter extends AbstractInterpreter
         // $this->stdout->writeString("stdout");
         // $this->stderr->writeString("stderr");
         $this->instructions = $this->parseXml();
+        $this->storage = new Storage();
 
-        echo var_dump($this->instructions);
+        ksort($this->instructions);
+        foreach ($this->instructions as $inst) {
+            $inst->execute($this->storage);
+        }
+
+        echo var_dump($this->storage);
 
         throw new NotImplementedException;
     }
