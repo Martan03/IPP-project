@@ -5,6 +5,7 @@ namespace IPP\Student;
 use DOMText;
 use IPP\Core\AbstractInterpreter;
 use IPP\Core\Exception\NotImplementedException;
+use IPP\Core\Exception\XMLException;
 use IPP\Core\Settings;
 
 class Interpreter extends AbstractInterpreter
@@ -47,6 +48,11 @@ class Interpreter extends AbstractInterpreter
                     $arg->nodeValue,
                 ));
             }
+
+            $order = $opcode->getAttribute("order") - 1;
+            if ($order < 0 || isset($instructions[$order]))
+                throw new XMLException();
+
             $instructions[$opcode->getAttribute("order") - 1] = $inst;
         }
 
