@@ -27,8 +27,8 @@ class Interpreter extends AbstractInterpreter
         $this->storage = new Storage();
 
         ksort($this->instructions);
-        foreach ($this->instructions as $inst) {
-            $this->execInstruction($inst);
+        foreach ($this->instructions as $key => $inst) {
+            $this->execInstruction($inst, $key);
         }
 
         echo "\nMemory:\n";
@@ -68,7 +68,7 @@ class Interpreter extends AbstractInterpreter
         return $instructions;
     }
 
-    private function execInstruction(Instruction $inst) {
+    private function execInstruction(Instruction $inst, int $pos) {
         match ($inst->opcode) {
             "MOVE" => $this->move($inst),
             "CREATEFRAME" => $this->storage->create(),
@@ -94,14 +94,14 @@ class Interpreter extends AbstractInterpreter
             "STRLEN" => $this->strlen($inst),
             "GETCHAR" => $this->getchar($inst),
             "SETCHAR" => $this->setchar($inst),
-            "TYPE" => $this->none(),
-            "LABEL" => $this->none(),
-            "JUMP" => $this->none(),
-            "JUMPIFEQ" => $this->none(),
-            "JUMPIFNEQ" => $this->none(),
-            "EXIT" => $this->none(),
-            "DPRINT" => $this->none(),
-            "BREAK" => $this->none(),
+            "TYPE" => $this->type($inst),
+            "LABEL" => $this->label($inst, $pos),
+            "JUMP" => $this->jump($inst),
+            "JUMPIFEQ" => $this->jumpifeq($inst),
+            "JUMPIFNEQ" => $this->jumpifneq($inst),
+            "EXIT" => $this->exit($inst),
+            "DPRINT" => $this->dprint($inst),
+            "BREAK" => $this->breakInst(),
             default => $this->none(),
         };
     }
@@ -280,6 +280,67 @@ class Interpreter extends AbstractInterpreter
         $strArr[$item1->getValue()] = $item2->getValue()[0];
         $res = implode('', $strArr);
         $this->storage->add($frame, $name, "string", $res);
+    }
+
+    private function type(Instruction $inst) {
+        $item = $this->getSymb($inst->args[0]);
+
+        $res = $item->getType() ?? "string";
+        list($frame, $name) = explode('@', $inst->args[0]);
+        $this->storage->add($frame, $name, "string", $res);
+    }
+
+    private function label(Instruction $inst, int $pos) {
+        $this->storage->addLabel($inst->args[0], $pos);
+    }
+
+    private function jump(Instruction $inst) {
+        /// Need to set the position
+        $pos = $this->storage->getLabel($inst->args[0]);
+    }
+
+    private function jumpifeq(Instruction $inst) {
+        $item1 = $this->getSymb($inst->args[1]);
+        $item2 = $this->getSymb($inst->args[2]);
+        if ($item1->getType() != $item2->getType())
+            return;
+
+        if ($item1->getValue() != $item2->getValue())
+            return;
+
+        /// Need to set the position
+        $pos = $this->storage->getLabel($inst->args[0]);
+    }
+
+    private function jumpifneq(Instruction $inst) {
+        $item1 = $this->getSymb($inst->args[1]);
+        $item2 = $this->getSymb($inst->args[2]);
+        if ($item1->getType() != $item2->getType())
+            return;
+
+        if ($item1->getValue() == $item2->getValue())
+            return;
+
+        /// Need to set the position
+        $pos = $this->storage->getLabel($inst->args[0]);
+    }
+
+    private function exit(Instruction $inst) {
+        // TODO
+    }
+
+    private function dprint(Instruction $inst) {
+        $item = $this->getSymb($inst->args[0]);
+        match ($item->getType()) {
+            "int" => $this->stderr->writeInt((int)$item->getValue()),
+            "string" => $this->stderr->writeString($item->getValue()),
+            "bool" => $this->stderr->writeBool($item->getValue()),
+            "nil" => $this->stderr->writeString(''),
+        };
+    }
+
+    private function breakInst() {
+        // TODO
     }
 
 
