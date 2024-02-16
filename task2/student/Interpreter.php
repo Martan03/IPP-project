@@ -3,11 +3,12 @@
 namespace IPP\Student;
 
 use DOMText;
+use IntlChar;
 use IPP\Core\AbstractInterpreter;
 use IPP\Core\Exception\NotImplementedException;
 use IPP\Core\Exception\ParameterException;
 use IPP\Core\Exception\XMLException;
-use IPP\Core\Settings;
+use IPP\Student\Exception\SemanticException;
 
 class Interpreter extends AbstractInterpreter
 {
@@ -28,12 +29,12 @@ class Interpreter extends AbstractInterpreter
         ksort($this->instructions);
         foreach ($this->instructions as $inst) {
             $this->execInstruction($inst);
-            //$inst->execute($this->input, $this->storage);
         }
 
+        echo "\nMemory:\n";
         echo var_dump($this->storage);
 
-        throw new NotImplementedException;
+        return 0;
     }
 
     /**
@@ -88,11 +89,11 @@ class Interpreter extends AbstractInterpreter
             "INT2CHAR" => $this->int2char($inst),
             "STRI2INT" => $this->stri2int($inst),
             "READ" => $this->read($inst),
-            "WRITE" => $this->none(),
-            "CONCAT" => $this->none(),
-            "STRLEN" => $this->none(),
-            "GETCHAR" => $this->none(),
-            "SETCHAR" => $this->none(),
+            "WRITE" => $this->write($inst),
+            "CONCAT" => $this->concat($inst),
+            "STRLEN" => $this->strlen($inst),
+            "GETCHAR" => $this->getchar($inst),
+            "SETCHAR" => $this->setchar($inst),
             "TYPE" => $this->none(),
             "LABEL" => $this->none(),
             "JUMP" => $this->none(),
@@ -117,9 +118,8 @@ class Interpreter extends AbstractInterpreter
 
     private function defVar(Instruction $inst) {
         list($frame, $name) = explode('@', $inst->args[0]->getValue());
-        // TODO: use correct exception
         if (!$this->storage->defVar($frame, $name))
-            throw new ParameterException();
+            throw new SemanticException();
     }
 
     private function calc(Instruction $inst) {
@@ -224,6 +224,62 @@ class Interpreter extends AbstractInterpreter
         $res = $value ?? null;
         list($frame, $name) = explode('@', $inst->args[0]->getValue());
         $this->storage->add($frame, $name, $type, $res);
+    }
+
+    private function write(Instruction $inst) {
+        $item = $this->getSymb($inst->args[0]);
+        match ($item->getType()) {
+            "int" => $this->stdout->writeInt((int)$item->getValue()),
+            "string" => $this->stdout->writeString($item->getValue()),
+            "bool" => $this->stdout->writeBool($item->getValue()),
+            "nil" => $this->stdout->writeString(''),
+        };
+    }
+
+    private function concat(Instruction $inst) {
+        $item1 = $this->getSymb($inst->args[1]);
+        $item2 = $this->getSymb($inst->args[2]);
+        if ($item1->getType() != "string" || $item2->getType() != "string")
+            return;
+
+        $res = $item1->getValue() . $item2->getValue();
+        list($frame, $name) = explode('@', $inst->args[0]);
+        $this->storage->add($frame, $name, "string", $res);
+    }
+
+    private function strlen(Instruction $inst) {
+        $item = $this->getSymb($inst->args[0]);
+        if ($item->getType() != "string")
+            return;
+
+        $res = strlen($item->getValue());
+        list($frame, $name) = explode('@', $inst->args[0]);
+        $this->storage->add($frame, $name, "int", $res);
+    }
+
+    private function getchar(Instruction $inst) {
+        $item1 = $this->getSymb($inst->args[1]);
+        $item2 = $this->getSymb($inst->args[2]);
+
+        if (!isset($item1->getValue()[$item2->getValue()]))
+            return;
+
+        $res = $item1->getValue()[$item2->getValue()];
+        list($frame, $name) = explode('@', $inst->args[0]);
+        $this->storage->add($frame, $name, "string", $res);
+    }
+
+    private function setchar(Instruction $inst) {
+        $item1 = $this->getSymb($inst->args[1]);
+        $item2 = $this->getSymb($inst->args[2]);
+        if ($item1->getType() != "int" || $item2->getType() != "string")
+            return;
+
+        list($frame, $name) = explode('@', $inst->args[0]);
+        $strArr = str_split($this->storage->get($frame, $name));
+        $strArr[$item1->getValue()] = $item2->getValue()[0];
+        $res = implode('', $strArr);
+        $this->storage->add($frame, $name, "string", $res);
     }
 
 

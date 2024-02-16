@@ -15,5 +15,8 @@
         <arg2 type="var">GF@test</arg2>
         <arg3 type="int">5</arg3>
     </instruction>
+    <instruction order="5" opcode="WRITE">
+        <arg1 type="var">GF@res</arg1>
+    </instruction>
 </program>
 
