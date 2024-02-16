@@ -55,8 +55,8 @@ class Instruction {
             "AND" => $this->and($storage),
             "OR" => $this->or($storage),
             "NOT" => $this->not($storage),
-            "INT2CHAR" => $this->none(),
-            "STRI2INT" => $this->none(),
+            "INT2CHAR" => $this->int2char($storage),
+            "STRI2INT" => $this->stri2int($storage),
             "READ" => $this->none(),
             "WRITE" => $this->none(),
             "CONCAT" => $this->none(),
@@ -78,9 +78,9 @@ class Instruction {
     private function none() {}
 
     private function move(Storage $storage) {
-        list($frame, $name) = explode('@', $this->args[0]->getValue());
-
         $item = $this->getSymb($storage, $this->args[1]);
+
+        list($frame, $name) = explode('@', $this->args[0]->getValue());
         $storage->add($frame, $name, $item->getType(), $item->getValue());
     }
 
@@ -92,8 +92,6 @@ class Instruction {
     }
 
     private function calc(Storage $storage) {
-        list($frame, $name) = explode('@', $this->args[0]->getValue());
-
         $item1 = $this->getSymb($storage, $this->args[1]);
         // TODO: use correct exception
         if ($item1->getType() != 'int')
@@ -111,12 +109,11 @@ class Instruction {
             "IDIV" => (int)$item1->getValue() / (int)$item2->getValue(),
         };
 
+        list($frame, $name) = explode('@', $this->args[0]->getValue());
         $storage->add($frame, $name, "int", $res);
     }
 
     private function cmp(Storage $storage, callable $cmpFun) {
-        list($frame, $name) = explode('@', $this->args[0]->getValue());
-
         $item1 = $this->getSymb($storage, $this->args[1]);
         $item2 = $this->getSymb($storage, $this->args[2]);
         // TODO return code
@@ -127,12 +124,11 @@ class Instruction {
             array($this, $cmpFun),
             array($item1->getValue(), $item2->getValue())
         );
+        list($frame, $name) = explode('@', $this->args[0]->getValue());
         $storage->add($frame, $name, "bool", $res);
     }
 
     private function and(Storage $storage) {
-        list($frame, $name) = explode('@', $this->args[0]->getValue());
-
         $item1 = $this->getSymb($storage, $this->args[1]);
         $item2 = $this->getSymb($storage, $this->args[2]);
         // TODO return code
@@ -140,12 +136,11 @@ class Instruction {
             return;
 
         $res = $item1->getValue() && $item2->getValue();
+        list($frame, $name) = explode('@', $this->args[0]->getValue());
         $storage->add($frame, $name, "bool", $res);
     }
 
     private function or(Storage $storage) {
-        list($frame, $name) = explode('@', $this->args[0]->getValue());
-
         $item1 = $this->getSymb($storage, $this->args[1]);
         $item2 = $this->getSymb($storage, $this->args[2]);
         // TODO return code
@@ -153,17 +148,37 @@ class Instruction {
             return;
 
         $res = $item1->getValue() || $item2->getValue();
+        list($frame, $name) = explode('@', $this->args[0]->getValue());
         $storage->add($frame, $name, "bool", $res);
     }
 
     private function not(Storage $storage) {
-        list($frame, $name) = explode('@', $this->args[0]->getValue());
-
         $item = $this->getSymb($storage, $this->args[1]);
         if ($item->getType() != "bool")
             return;
 
+        list($frame, $name) = explode('@', $this->args[0]->getValue());
         $storage->add($frame, $name, "bool", !$item->getValue());
+    }
+
+    private function int2char(Storage $storage) {
+        $item = $this->getSymb($storage, $this->args[1]);
+        if ($item->getType() != "int")
+            return;
+
+        list($frame, $name) = explode('@', $this->args[0]->getValue());
+        $storage->add($frame, $name, "string", chr($item->getValue()));
+    }
+
+    private function stri2int(Storage $storage) {
+        $item1 = $this->getSymb($storage, $this->args[1]);
+        $item2 = $this->getSymb($storage, $this->args[2]);
+        if ($item1->getType() != "string" || $item2->getType() != "int")
+            return;
+
+        $res = ord($item1->getValue()[$item2->getValue()]);
+        list($frame, $name) = explode('@', $this->args[0]->getValue());
+        $storage->add($frame, $name, "int", $res);
     }
 
 
