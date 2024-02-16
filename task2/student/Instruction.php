@@ -12,7 +12,7 @@ use IPP\Core\Exception\ParameterException;
  * Defines instruction with its opcode and arguments
  */
 class Instruction {
-    public string $opcode;
+    private string $opcode;
     private array $args;
 
     /**
@@ -49,12 +49,12 @@ class Instruction {
             "PUSHS" => $this->none(),
             "POPS" => $this->none(),
             "ADD", "SUB", "MUL", "IDIV" => $this->calc($storage),
-            "LT" => $this->none(),
-            "GT" => $this->none(),
-            "EQ" => $this->none(),
-            "AND" => $this->none(),
-            "OR" => $this->none(),
-            "NOT" => $this->none(),
+            "LT" => $this->cmp($storage, "lt"),
+            "GT" => $this->gt($storage, "gt"),
+            "EQ" => $this->eq($storage, "eq"),
+            "AND" => $this->and($storage),
+            "OR" => $this->or($storage),
+            "NOT" => $this->not($storage),
             "INT2CHAR" => $this->none(),
             "STRI2INT" => $this->none(),
             "READ" => $this->none(),
@@ -114,6 +114,58 @@ class Instruction {
         $storage->add($frame, $name, "int", $res);
     }
 
+    private function cmp(Storage $storage, callable $cmpFun) {
+        list($frame, $name) = explode('@', $this->args[0]->getValue());
+
+        $item1 = $this->getSymb($storage, $this->args[1]);
+        $item2 = $this->getSymb($storage, $this->args[2]);
+        // TODO return code
+        if ($item1->getType() != $item2->getType())
+            return;
+
+        $res = call_user_func_array(
+            array($this, $cmpFun),
+            array($item1->getValue(), $item2->getValue())
+        );
+        $storage->add($frame, $name, "bool", $res);
+    }
+
+    private function and(Storage $storage) {
+        list($frame, $name) = explode('@', $this->args[0]->getValue());
+
+        $item1 = $this->getSymb($storage, $this->args[1]);
+        $item2 = $this->getSymb($storage, $this->args[2]);
+        // TODO return code
+        if ($item1->getType() != "bool" || $item2->getType() != "bool")
+            return;
+
+        $res = $item1->getValue() && $item2->getValue();
+        $storage->add($frame, $name, "bool", $res);
+    }
+
+    private function or(Storage $storage) {
+        list($frame, $name) = explode('@', $this->args[0]->getValue());
+
+        $item1 = $this->getSymb($storage, $this->args[1]);
+        $item2 = $this->getSymb($storage, $this->args[2]);
+        // TODO return code
+        if ($item1->getType() != "bool" || $item2->getType() != "bool")
+            return;
+
+        $res = $item1->getValue() || $item2->getValue();
+        $storage->add($frame, $name, "bool", $res);
+    }
+
+    private function not(Storage $storage) {
+        list($frame, $name) = explode('@', $this->args[0]->getValue());
+
+        $item = $this->getSymb($storage, $this->args[1]);
+        if ($item->getType() != "bool")
+            return;
+
+        $storage->add($frame, $name, "bool", !$item->getValue());
+    }
+
 
     private function getSymb(Storage $storage, Arg $arg): StorageItem {
         $type = $arg->getType();
@@ -127,5 +179,18 @@ class Instruction {
         }
 
         return $item;
+    }
+
+
+    private function lt(mixed $val1, mixed $val2): bool {
+        return $val1 < $val2;
+    }
+
+    private function gt(mixed $val1, mixed $val2): bool {
+        return $val1 > $val2;
+    }
+
+    private function eq(mixed $val1, mixed $val2): bool {
+        return $val1 === $val2;
     }
 }
