@@ -26,6 +26,7 @@ class Interpreter extends AbstractInterpreter
 
         ksort($this->instructions);
         foreach ($this->instructions as $inst) {
+            echo $inst->opcode . "\n";
             $inst->execute($this->storage);
         }
 

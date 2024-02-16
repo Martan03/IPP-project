@@ -12,7 +12,7 @@ use IPP\Core\Exception\ParameterException;
  * Defines instruction with its opcode and arguments
  */
 class Instruction {
-    private string $opcode;
+    public string $opcode;
     private array $args;
 
     /**

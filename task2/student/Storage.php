@@ -43,16 +43,14 @@ class Storage {
         ?string $type,
         mixed $value
     ): bool {
-        $storage = match ($frame) {
-            "GF" => $this->global,
-            "LF" => $this->local,
-            "TF" => $this->temp,
-        };
-
-        if (!isset($storage[$name]))
+        if (!$this->exists($frame, $name))
             return false;
 
-        $storage[$name] = new StorageItem($type, $value);
+        match ($frame) {
+            "GF" => $this->global[$name] = new StorageItem($type, $value),
+            "LF" => $this->local[$name] = new StorageItem($type, $value),
+            "TF" => $this->temp[$name] = new StorageItem($type, $value),
+        };
         return true;
     }
 
@@ -77,7 +75,15 @@ class Storage {
      * @return bool true on success, else false
      */
     public function defVar(string $frame, string $name): bool {
-        return $this->add($frame, $name, null, null);
+        if ($this->exists($frame, $name))
+            return false;
+
+        match ($frame) {
+            "GF" => $this->global[$name] = new StorageItem(null, null),
+            "LF" => $this->local[$name] = new StorageItem(null, null),
+            "TF" => $this->temp[$name] = new StorageItem(null, null),
+        };
+        return true;
     }
 
     /**
@@ -121,5 +127,19 @@ class Storage {
      */
     public function getLabel(string $name): ?int {
         return $this->labels[$name];
+    }
+
+    /**
+     * Checks if item exists in the storage
+     * @param string $frame storage frame where to check for item
+     * @param string $name name of the item to check for
+     * @return bool true if exists, else false
+     */
+    public function exists(string $frame, string $name): bool {
+        return match ($frame) {
+            "GF" => isset($this->global[$name]),
+            "LF" => isset($this->local[$name]),
+            "TF" => isset($this->temp[$name]),
+        };
     }
 }
