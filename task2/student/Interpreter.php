@@ -243,7 +243,7 @@ class Interpreter extends AbstractInterpreter
             return;
 
         $res = $item1->getValue() . $item2->getValue();
-        list($frame, $name) = explode('@', $inst->args[0]);
+        list($frame, $name) = explode('@', $inst->args[0]->getValue());
         $this->storage->add($frame, $name, "string", $res);
     }
 
@@ -253,7 +253,7 @@ class Interpreter extends AbstractInterpreter
             return;
 
         $res = strlen($item->getValue());
-        list($frame, $name) = explode('@', $inst->args[0]);
+        list($frame, $name) = explode('@', $inst->args[0]->getValue());
         $this->storage->add($frame, $name, "int", $res);
     }
 
@@ -265,7 +265,7 @@ class Interpreter extends AbstractInterpreter
             return;
 
         $res = $item1->getValue()[$item2->getValue()];
-        list($frame, $name) = explode('@', $inst->args[0]);
+        list($frame, $name) = explode('@', $inst->args[0]->getValue());
         $this->storage->add($frame, $name, "string", $res);
     }
 
@@ -275,7 +275,7 @@ class Interpreter extends AbstractInterpreter
         if ($item1->getType() != "int" || $item2->getType() != "string")
             return;
 
-        list($frame, $name) = explode('@', $inst->args[0]);
+        list($frame, $name) = explode('@', $inst->args[0]->getValue());
         $strArr = str_split($this->storage->get($frame, $name));
         $strArr[$item1->getValue()] = $item2->getValue()[0];
         $res = implode('', $strArr);
@@ -286,17 +286,17 @@ class Interpreter extends AbstractInterpreter
         $item = $this->getSymb($inst->args[0]);
 
         $res = $item->getType() ?? "string";
-        list($frame, $name) = explode('@', $inst->args[0]);
+        list($frame, $name) = explode('@', $inst->args[0]->getValue());
         $this->storage->add($frame, $name, "string", $res);
     }
 
     private function label(Instruction $inst, int $pos) {
-        $this->storage->addLabel($inst->args[0], $pos);
+        $this->storage->addLabel($inst->args[0]->getValue(), $pos);
     }
 
     private function jump(Instruction $inst) {
         /// Need to set the position
-        $pos = $this->storage->getLabel($inst->args[0]);
+        $pos = $this->storage->getLabel($inst->args[0]->getValue());
     }
 
     private function jumpifeq(Instruction $inst) {
@@ -309,7 +309,7 @@ class Interpreter extends AbstractInterpreter
             return;
 
         /// Need to set the position
-        $pos = $this->storage->getLabel($inst->args[0]);
+        $pos = $this->storage->getLabel($inst->args[0]->getValue());
     }
 
     private function jumpifneq(Instruction $inst) {
@@ -322,7 +322,7 @@ class Interpreter extends AbstractInterpreter
             return;
 
         /// Need to set the position
-        $pos = $this->storage->getLabel($inst->args[0]);
+        $pos = $this->storage->getLabel($inst->args[0]->getValue());
     }
 
     private function exit(Instruction $inst) {
