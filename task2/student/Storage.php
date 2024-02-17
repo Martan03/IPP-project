@@ -6,6 +6,8 @@
 
 namespace IPP\Student;
 
+use IPP\Student\Exception\FrameAccessException;
+
 /**
  * Class representing storage
  */
@@ -50,6 +52,7 @@ class Storage {
             "GF" => $this->global[$name] = new StorageItem($type, $value),
             "LF" => $this->local[$name] = new StorageItem($type, $value),
             "TF" => $this->temp[$name] = new StorageItem($type, $value),
+            default => throw new FrameAccessException(),
         };
         return true;
     }
@@ -65,6 +68,7 @@ class Storage {
             "GF" => $this->global[$name],
             "LF" => $this->local[$name],
             "TF" => $this->temp[$name],
+            default => throw new FrameAccessException(),
         };
     }
 
@@ -82,6 +86,7 @@ class Storage {
             "GF" => $this->global[$name] = new StorageItem(null, null),
             "LF" => $this->local[$name] = new StorageItem(null, null),
             "TF" => $this->temp[$name] = new StorageItem(null, null),
+            default => throw new FrameAccessException(),
         };
         return true;
     }
@@ -141,6 +146,7 @@ class Storage {
             "GF" => isset($this->global[$name]),
             "LF" => isset($this->local[$name]),
             "TF" => isset($this->temp[$name]),
+            default => throw new FrameAccessException(),
         };
     }
 }

@@ -11,6 +11,7 @@ use IPP\Core\Exception\XMLException;
 use IPP\Student\Exception\OperandTypeException;
 use IPP\Student\Exception\OperandValueException;
 use IPP\Student\Exception\SemanticException;
+use IPP\Student\Exception\StringOperationException;
 
 class Interpreter extends AbstractInterpreter
 {
@@ -62,7 +63,7 @@ class Interpreter extends AbstractInterpreter
 
                 $inst->addArg(new Arg(
                     $arg->getAttribute("type"),
-                    $arg->nodeValue,
+                    trim($arg->nodeValue),
                 ));
             }
 
@@ -249,7 +250,8 @@ class Interpreter extends AbstractInterpreter
         $item = $this->getSymb($inst->args[0]);
         match ($item->getType()) {
             "int" => $this->stdout->writeInt((int)$item->getValue()),
-            "string" => $this->stdout->writeString($item->getValue()),
+            "string" => $this->stdout->writeString(
+                $this->replaceString($item->getValue())),
             "bool" => $this->stdout->writeBool($item->getValue()),
             "nil" => $this->stdout->writeString(''),
         };
@@ -279,9 +281,11 @@ class Interpreter extends AbstractInterpreter
     private function getchar(Instruction $inst) {
         $item1 = $this->getSymb($inst->args[1]);
         $item2 = $this->getSymb($inst->args[2]);
+        if ($item1->getType() != "string" || $item2->getType() != "int")
+            throw new OperandTypeException("GETCHAR excepts string and int");
 
-        if (!isset($item1->getValue()[$item2->getValue()]))
-            return;
+        if (!isset($item1->getValue()[(int)$item2->getValue()]))
+            throw new StringOperationException("GETCHAR index out of range");
 
         $res = $item1->getValue()[$item2->getValue()];
         list($frame, $name) = explode('@', $inst->args[0]->getValue());
@@ -292,10 +296,15 @@ class Interpreter extends AbstractInterpreter
         $item1 = $this->getSymb($inst->args[1]);
         $item2 = $this->getSymb($inst->args[2]);
         if ($item1->getType() != "int" || $item2->getType() != "string")
-            return;
+            throw new OperandTypeException("SETCHAR excepts int and string");
 
         list($frame, $name) = explode('@', $inst->args[0]->getValue());
         $strArr = str_split($this->storage->get($frame, $name));
+
+        if (!isset($item2->getValue()[0]) ||
+            !isset($strArr[(int)$item1->getValue()]))
+            throw new StringOperationException("SETCHAR index out of range");
+
         $strArr[$item1->getValue()] = $item2->getValue()[0];
         $res = implode('', $strArr);
         $this->storage->add($frame, $name, "string", $res);
@@ -417,5 +426,15 @@ class Interpreter extends AbstractInterpreter
             throw new OperandValueException("Cannot divide by 0");
 
         return $val1 / $val2;
+    }
+
+    private function replaceString(string $text): string {
+        return preg_replace_callback(
+            '/\\\\([0-9]{3})/',
+            function ($matches) {
+                return chr($matches[1]);
+            },
+            $text
+        );
     }
 }
