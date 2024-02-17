@@ -14,6 +14,7 @@ class Interpreter extends AbstractInterpreter
 {
     private array $instructions;
     private Storage $storage;
+    private ?int $pos;
 
     public function execute(): int
     {
@@ -27,8 +28,13 @@ class Interpreter extends AbstractInterpreter
         $this->storage = new Storage();
 
         ksort($this->instructions);
-        foreach ($this->instructions as $key => $inst) {
-            $this->execInstruction($inst, $key);
+
+        $this->parseLabels();
+
+        reset($this->instructions);
+        while (($this->pos = key($this->instructions)) !== null) {
+            $this->execInstruction($this->instructions[$this->pos]);
+            next($this->instructions);
         }
 
         echo "\nMemory:\n";
@@ -68,7 +74,21 @@ class Interpreter extends AbstractInterpreter
         return $instructions;
     }
 
-    private function execInstruction(Instruction $inst, int $pos) {
+    private function parseLabels() {
+        foreach ($this->instructions as $key => $inst) {
+            if ($inst->opcode != "LABEL")
+                continue;
+
+            $label = $inst->args[0]->getValue();
+            if (!$this->storage->addLabel($label, $key)) {
+                throw new SemanticException(
+                    "Label '" . $label . "' already exists"
+                );
+            }
+        }
+    }
+
+    private function execInstruction(Instruction $inst) {
         match ($inst->opcode) {
             "MOVE" => $this->move($inst),
             "CREATEFRAME" => $this->storage->create(),
@@ -95,14 +115,13 @@ class Interpreter extends AbstractInterpreter
             "GETCHAR" => $this->getchar($inst),
             "SETCHAR" => $this->setchar($inst),
             "TYPE" => $this->type($inst),
-            "LABEL" => $this->label($inst, $pos),
             "JUMP" => $this->jump($inst),
             "JUMPIFEQ" => $this->jumpifeq($inst),
             "JUMPIFNEQ" => $this->jumpifneq($inst),
             "EXIT" => $this->exit($inst),
             "DPRINT" => $this->dprint($inst),
             "BREAK" => $this->breakInst(),
-            default => $this->none(),
+            default => function() {},
         };
     }
 
@@ -290,13 +309,12 @@ class Interpreter extends AbstractInterpreter
         $this->storage->add($frame, $name, "string", $res);
     }
 
-    private function label(Instruction $inst, int $pos) {
-        $this->storage->addLabel($inst->args[0]->getValue(), $pos);
-    }
-
     private function jump(Instruction $inst) {
         /// Need to set the position
         $pos = $this->storage->getLabel($inst->args[0]->getValue());
+        reset($this->instructions);
+        while (key($this->instructions) !== $pos &&
+               next($this->instructions) !== false);
     }
 
     private function jumpifeq(Instruction $inst) {
@@ -310,6 +328,9 @@ class Interpreter extends AbstractInterpreter
 
         /// Need to set the position
         $pos = $this->storage->getLabel($inst->args[0]->getValue());
+        reset($this->instructions);
+        while (key($this->instructions) !== $pos &&
+               next($this->instructions) !== false);
     }
 
     private function jumpifneq(Instruction $inst) {
@@ -323,6 +344,9 @@ class Interpreter extends AbstractInterpreter
 
         /// Need to set the position
         $pos = $this->storage->getLabel($inst->args[0]->getValue());
+        reset($this->instructions);
+        while (key($this->instructions) !== $pos &&
+               next($this->instructions) !== false);
     }
 
     private function exit(Instruction $inst) {

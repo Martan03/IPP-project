@@ -112,6 +112,7 @@ class Storage {
      * Adds new label to the labels array
      * @param string $name name of the label
      * @param int $pos position of the label (instruction number)
+     * @return bool true on success, else false
      */
     public function addLabel(string $name, int $pos): bool {
         if (isset($this->labels[$name]))
