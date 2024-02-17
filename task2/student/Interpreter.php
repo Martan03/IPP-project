@@ -8,6 +8,8 @@ use IPP\Core\AbstractInterpreter;
 use IPP\Core\Exception\NotImplementedException;
 use IPP\Core\Exception\ParameterException;
 use IPP\Core\Exception\XMLException;
+use IPP\Student\Exception\OperandTypeException;
+use IPP\Student\Exception\OperandValueException;
 use IPP\Student\Exception\SemanticException;
 
 class Interpreter extends AbstractInterpreter
@@ -99,7 +101,10 @@ class Interpreter extends AbstractInterpreter
             "RETURN" => $this->none(),
             "PUSHS" => $this->none(),
             "POPS" => $this->none(),
-            "ADD", "SUB", "MUL", "IDIV" => $this->calc($inst),
+            "ADD" => $this->calc($inst, "sum"),
+            "SUB" => $this->calc($inst, "sub"),
+            "MUL" => $this->calc($inst, "mul"),
+            "IDIV" => $this->calc($inst, "div"),
             "LT" => $this->cmp($inst, "lt"),
             "GT" => $this->gt($inst, "gt"),
             "EQ" => $this->eq($inst, "eq"),
@@ -141,34 +146,25 @@ class Interpreter extends AbstractInterpreter
             throw new SemanticException();
     }
 
-    private function calc(Instruction $inst) {
+    private function calc(Instruction $inst, string $calculate) {
         $item1 = $this->getSymb($inst->args[1]);
-        // TODO: use correct exception
-        if ($item1->getType() != 'int')
-            throw new ParameterException();
-
         $item2 = $this->getSymb($inst->args[2]);
-        // TODO: use correct exception
-        if ($item2->getType() != 'int')
-            throw new ParameterException();
+        if ($item1->getType() != 'int' || $item2->getType() != 'int')
+            throw new OperandTypeException("Can calculate only with integer");
 
-        $res = match ($inst->opcode) {
-            "ADD" => (int)$item1->getValue() + (int)$item2->getValue(),
-            "SUB" => (int)$item1->getValue() - (int)$item2->getValue(),
-            "MUL" => (int)$item1->getValue() * (int)$item2->getValue(),
-            "IDIV" => (int)$item1->getValue() / (int)$item2->getValue(),
-        };
-
+        $res = call_user_func_array(
+            array($this, $calculate),
+            array((int)$item1->getValue(), (int)$item2->getValue()),
+        );
         list($frame, $name) = explode('@', $inst->args[0]->getValue());
         $this->storage->add($frame, $name, "int", $res);
     }
 
-    private function cmp(Instruction $inst, callable $cmpFun) {
+    private function cmp(Instruction $inst, string $cmpFun) {
         $item1 = $this->getSymb($inst->args[1]);
         $item2 = $this->getSymb($inst->args[2]);
-        // TODO return code
         if ($item1->getType() != $item2->getType())
-            return;
+            throw new OperandTypeException("Can compare same types only");
 
         $res = call_user_func_array(
             array($this, $cmpFun),
@@ -181,9 +177,10 @@ class Interpreter extends AbstractInterpreter
     private function and(Instruction $inst) {
         $item1 = $this->getSymb($inst->args[1]);
         $item2 = $this->getSymb($inst->args[2]);
-        // TODO return code
         if ($item1->getType() != "bool" || $item2->getType() != "bool")
-            return;
+            throw new OperandTypeException(
+                "Boolean operators can be applied to bool only
+            ");
 
         $res = $item1->getValue() && $item2->getValue();
         list($frame, $name) = explode('@', $inst->args[0]->getValue());
@@ -193,9 +190,10 @@ class Interpreter extends AbstractInterpreter
     private function or(Instruction $inst) {
         $item1 = $this->getSymb($inst->args[1]);
         $item2 = $this->getSymb($inst->args[2]);
-        // TODO return code
         if ($item1->getType() != "bool" || $item2->getType() != "bool")
-            return;
+            throw new OperandTypeException(
+                "Boolean operators can be applied to bool only
+            ");
 
         $res = $item1->getValue() || $item2->getValue();
         list($frame, $name) = explode('@', $inst->args[0]->getValue());
@@ -205,7 +203,9 @@ class Interpreter extends AbstractInterpreter
     private function not(Instruction $inst) {
         $item = $this->getSymb($inst->args[1]);
         if ($item->getType() != "bool")
-            return;
+            throw new OperandTypeException(
+                "Boolean operators can be applied to bool only
+            ");
 
         list($frame, $name) = explode('@', $inst->args[0]->getValue());
         $this->storage->add($frame, $name, "bool", !$item->getValue());
@@ -398,5 +398,24 @@ class Interpreter extends AbstractInterpreter
 
     private function eq(mixed $val1, mixed $val2): bool {
         return $val1 === $val2;
+    }
+
+    private function sum(int $val1, int $val2): int {
+        return $val1 + $val2;
+    }
+
+    private function sub(int $val1, int $val2): int {
+        return $val1 - $val2;
+    }
+
+    private function mul(int $val1, int $val2): int {
+        return $val1 * $val2;
+    }
+
+    private function div(int $val1, int $val2): int {
+        if ($val2 === 0)
+            throw new OperandValueException("Cannot divide by 0");
+
+        return $val1 / $val2;
     }
 }
