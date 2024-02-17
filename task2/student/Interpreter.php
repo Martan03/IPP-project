@@ -97,21 +97,13 @@ class Interpreter extends AbstractInterpreter
             "RETURN" => $this->none(),
             "PUSHS" => $this->none(),
             "POPS" => $this->none(),
-            "ADD" => $this->calc($inst, function (int $x, int $y) {
-                return $this->sum($x, $y);
-            }),
-            "SUB" => $this->calc($inst, function (int $x, int $y) {
-                return $this->sub($x, $y);
-            }),
-            "MUL" => $this->calc($inst, function (int $x, int $y) {
-                return $this->mul($x, $y);
-            }),
-            "IDIV" => $this->calc($inst, function (int $x, int $y) {
-                return $this->div($x, $y);
-            }),
-            "LT" => $this->cmp($inst, "lt"),
-            "GT" => $this->gt($inst, "gt"),
-            "EQ" => $this->eq($inst, "eq"),
+            "ADD" => $this->calc($inst, [$this, "sum"]),
+            "SUB" => $this->calc($inst, [$this, "sub"]),
+            "MUL" => $this->calc($inst, [$this, "mul"]),
+            "IDIV" => $this->calc($inst, [$this, "div"]),
+            "LT" => $this->cmp($inst, [$this, "lt"]),
+            "GT" => $this->gt($inst, [$this, "gt"]),
+            "EQ" => $this->eq($inst, [$this, "eq"]),
             "AND" => $this->and($inst),
             "OR" => $this->or($inst),
             "NOT" => $this->not($inst),
@@ -161,16 +153,13 @@ class Interpreter extends AbstractInterpreter
         $this->storage->add($frame, $name, "int", $res);
     }
 
-    private function cmp(Instruction $inst, string $cmpFun): void {
+    private function cmp(Instruction $inst, callable $cmpFun): void {
         $item1 = $this->getSymb($inst->args[1]);
         $item2 = $this->getSymb($inst->args[2]);
         if ($item1->getType() != $item2->getType())
             throw new OperandTypeException("Can compare same types only");
 
-        $res = call_user_func_array(
-            array($this, $cmpFun),
-            array($item1->getValue(), $item2->getValue())
-        );
+        $res = $cmpFun($item1->getValue(), $item2->getValue());
         list($frame, $name) = explode('@', $inst->args[0]->getValue());
         $this->storage->add($frame, $name, "bool", $res);
     }
