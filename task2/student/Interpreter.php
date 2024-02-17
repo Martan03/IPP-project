@@ -156,10 +156,7 @@ class Interpreter extends AbstractInterpreter
         if ($item1->getType() != 'int' || $item2->getType() != 'int')
             throw new OperandTypeException("Can calculate only with integer");
 
-        $res = call_user_func_array(
-            array($this, $calculate),
-            array((int)$item1->getValue(), (int)$item2->getValue()),
-        );
+        $res = $calculate((int)$item1->getValue(), (int)$item2->getValue());
         list($frame, $name) = explode('@', $inst->args[0]->getValue());
         $this->storage->add($frame, $name, "int", $res);
     }

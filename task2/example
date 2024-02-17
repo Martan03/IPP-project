@@ -30,10 +30,21 @@
         <arg3 type="string">a</arg3>
     </instruction>
     <instruction order="9" opcode="JUMP">
-        <arg1 type="label">test</arg1>
+        <arg1 type="label">while</arg1>
     </instruction>
     <instruction order="10" opcode="LABEL">
         <arg1 type="label">end</arg1>
+    </instruction>
+    <instruction order="11" opcode="DEFVAR">
+        <arg1 type="var">GF@test</arg1>
+    </instruction>
+    <instruction order="12" opcode="ADD">
+        <arg1 type="var">GF@test</arg1>
+        <arg2 type="int">5</arg2>
+        <arg3 type="int">10</arg3>
+    </instruction>
+    <instruction order="13" opcode="WRITE">
+        <arg1 type="var">GF@test</arg1>
     </instruction>
 </program>
 
