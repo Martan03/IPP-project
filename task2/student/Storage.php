@@ -12,11 +12,26 @@ use IPP\Student\Exception\FrameAccessException;
  * Class representing storage
  */
 class Storage {
+    /**
+     * @var array<string, StorageItem> global storage frame
+     */
     private array $global;
+    /**
+     * @var array<string, StorageItem> local storage frame
+     */
     private array $local;
+    /**
+     * @var ?array<string, StorageItem> temp storage frame
+     */
     private ?array $temp;
+    /**
+     * @var array<int, array<string, StorageItem>> temp frames queue
+     */
     private array $queue;
 
+    /**
+     * @var array<string, int> array containing labels
+     */
     private array $labels;
 
     /**
@@ -94,14 +109,14 @@ class Storage {
     /**
      * Creates new temp frame
      */
-    public function create() {
+    public function create(): void {
         $this->temp = [];
     }
 
     /**
      * Pushes temp frame to the queue
      */
-    public function push() {
+    public function push(): void {
         $this->queue[] = $this->temp;
         $this->temp = null;
     }
@@ -109,7 +124,7 @@ class Storage {
     /**
      * Pops temp frame from queue
      */
-    public function pop() {
+    public function pop(): void {
         $this->temp = array_shift($this->queue);
     }
 

@@ -14,8 +14,8 @@ class StorageItem {
 
     /**
      * Constructs new Storage item
-     * @param string $type type of the item
-     * @param string $value value of the item
+     * @param ?string $type type of the item
+     * @param mixed $value value of the item
      */
     public function __construct(?string $type, mixed $value) {
         $this->type = $type;

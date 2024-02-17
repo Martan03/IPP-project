@@ -3,10 +3,7 @@
 namespace IPP\Student;
 
 use DOMText;
-use IntlChar;
 use IPP\Core\AbstractInterpreter;
-use IPP\Core\Exception\NotImplementedException;
-use IPP\Core\Exception\ParameterException;
 use IPP\Core\Exception\XMLException;
 use IPP\Student\Exception\OperandTypeException;
 use IPP\Student\Exception\OperandValueException;
@@ -15,18 +12,15 @@ use IPP\Student\Exception\StringOperationException;
 
 class Interpreter extends AbstractInterpreter
 {
+    /**
+     * @var array<int, Instruction> instructions array
+     */
     private array $instructions;
     private Storage $storage;
     private ?int $pos;
 
     public function execute(): int
     {
-        // TODO: Start your code here
-        // Check \IPP\Core\AbstractInterpreter for predefined I/O objects:
-        // $dom = $this->source->getDOMDocument();
-        // $val = $this->input->readString();
-        // $this->stdout->writeString("stdout");
-        // $this->stderr->writeString("stderr");
         $this->instructions = $this->parseXml();
         $this->storage = new Storage();
 
@@ -40,15 +34,16 @@ class Interpreter extends AbstractInterpreter
             next($this->instructions);
         }
 
+        /*
         echo "\nMemory:\n";
         echo var_dump($this->storage);
-
+        */
         return 0;
     }
 
     /**
      * Parses input XML and gets array of Instructions
-     * @return array array containing Instruction objects
+     * @return array<int, Instruction> array containing instructions
      */
     private function parseXml(): array {
         $instructions = [];
@@ -63,21 +58,21 @@ class Interpreter extends AbstractInterpreter
 
                 $inst->addArg(new Arg(
                     $arg->getAttribute("type"),
-                    trim($arg->nodeValue),
+                    trim($arg->nodeValue ?? ""),
                 ));
             }
 
-            $order = $opcode->getAttribute("order") - 1;
+            $order = (int)$opcode->getAttribute("order") - 1;
             if ($order < 0 || isset($instructions[$order]))
                 throw new XMLException();
 
-            $instructions[$opcode->getAttribute("order") - 1] = $inst;
+            $instructions[$order] = $inst;
         }
 
         return $instructions;
     }
 
-    private function parseLabels() {
+    private function parseLabels(): void {
         foreach ($this->instructions as $key => $inst) {
             if ($inst->opcode != "LABEL")
                 continue;
@@ -85,13 +80,13 @@ class Interpreter extends AbstractInterpreter
             $label = $inst->args[0]->getValue();
             if (!$this->storage->addLabel($label, $key)) {
                 throw new SemanticException(
-                    "Label '" . $label . "' already exists"
+                    "Label '" . $label . "' is defined more than once"
                 );
             }
         }
     }
 
-    private function execInstruction(Instruction $inst) {
+    private function execInstruction(Instruction $inst): void {
         match ($inst->opcode) {
             "MOVE" => $this->move($inst),
             "CREATEFRAME" => $this->storage->create(),
@@ -131,9 +126,9 @@ class Interpreter extends AbstractInterpreter
         };
     }
 
-    private function none() {}
+    private function none(): void {}
 
-    private function move(Instruction $inst) {
+    private function move(Instruction $inst): void {
         $item = $this->getSymb($inst->args[1]);
 
         list($frame, $name) = explode('@', $inst->args[0]->getValue());
@@ -141,13 +136,13 @@ class Interpreter extends AbstractInterpreter
             ->add($frame, $name, $item->getType(), $item->getValue());
     }
 
-    private function defVar(Instruction $inst) {
+    private function defVar(Instruction $inst): void {
         list($frame, $name) = explode('@', $inst->args[0]->getValue());
         if (!$this->storage->defVar($frame, $name))
             throw new SemanticException();
     }
 
-    private function calc(Instruction $inst, string $calculate) {
+    private function calc(Instruction $inst, string $calculate): void {
         $item1 = $this->getSymb($inst->args[1]);
         $item2 = $this->getSymb($inst->args[2]);
         if ($item1->getType() != 'int' || $item2->getType() != 'int')
@@ -161,7 +156,7 @@ class Interpreter extends AbstractInterpreter
         $this->storage->add($frame, $name, "int", $res);
     }
 
-    private function cmp(Instruction $inst, string $cmpFun) {
+    private function cmp(Instruction $inst, string $cmpFun): void {
         $item1 = $this->getSymb($inst->args[1]);
         $item2 = $this->getSymb($inst->args[2]);
         if ($item1->getType() != $item2->getType())
@@ -175,7 +170,7 @@ class Interpreter extends AbstractInterpreter
         $this->storage->add($frame, $name, "bool", $res);
     }
 
-    private function and(Instruction $inst) {
+    private function and(Instruction $inst): void {
         $item1 = $this->getSymb($inst->args[1]);
         $item2 = $this->getSymb($inst->args[2]);
         if ($item1->getType() != "bool" || $item2->getType() != "bool")
@@ -188,7 +183,7 @@ class Interpreter extends AbstractInterpreter
         $this->storage->add($frame, $name, "bool", $res);
     }
 
-    private function or(Instruction $inst) {
+    private function or(Instruction $inst): void {
         $item1 = $this->getSymb($inst->args[1]);
         $item2 = $this->getSymb($inst->args[2]);
         if ($item1->getType() != "bool" || $item2->getType() != "bool")
@@ -201,7 +196,7 @@ class Interpreter extends AbstractInterpreter
         $this->storage->add($frame, $name, "bool", $res);
     }
 
-    private function not(Instruction $inst) {
+    private function not(Instruction $inst): void {
         $item = $this->getSymb($inst->args[1]);
         if ($item->getType() != "bool")
             throw new OperandTypeException(
@@ -212,7 +207,7 @@ class Interpreter extends AbstractInterpreter
         $this->storage->add($frame, $name, "bool", !$item->getValue());
     }
 
-    private function int2char(Instruction $inst) {
+    private function int2char(Instruction $inst): void {
         $item = $this->getSymb($inst->args[1]);
         if ($item->getType() != "int")
             return;
@@ -221,7 +216,7 @@ class Interpreter extends AbstractInterpreter
         $this->storage->add($frame, $name, "string", chr($item->getValue()));
     }
 
-    private function stri2int(Instruction $inst) {
+    private function stri2int(Instruction $inst): void {
         $item1 = $this->getSymb($inst->args[1]);
         $item2 = $this->getSymb($inst->args[2]);
         if ($item1->getType() != "string" || $item2->getType() != "int")
@@ -232,12 +227,13 @@ class Interpreter extends AbstractInterpreter
         $this->storage->add($frame, $name, "int", $res);
     }
 
-    private function read(Instruction $inst) {
+    private function read(Instruction $inst): void {
         $item = $this->getSymb($inst->args[1]);
         $value = match ($item->getValue()) {
             "int" => $this->input->readInt(),
             "string" => $this->input->readString(),
             "bool" => $this->input->readBool(),
+            default => throw new OperandValueException("Invalid type given"),
         };
 
         $type = $value ? $item->getValue() : "nil";
@@ -246,7 +242,7 @@ class Interpreter extends AbstractInterpreter
         $this->storage->add($frame, $name, $type, $res);
     }
 
-    private function write(Instruction $inst) {
+    private function write(Instruction $inst): void {
         $item = $this->getSymb($inst->args[0]);
         match ($item->getType()) {
             "int" => $this->stdout->writeInt((int)$item->getValue()),
@@ -254,10 +250,13 @@ class Interpreter extends AbstractInterpreter
                 $this->replaceString($item->getValue())),
             "bool" => $this->stdout->writeBool($item->getValue()),
             "nil" => $this->stdout->writeString(''),
+            default => throw new OperandTypeException(
+                "tried to print invalid type"
+            ),
         };
     }
 
-    private function concat(Instruction $inst) {
+    private function concat(Instruction $inst): void {
         $item1 = $this->getSymb($inst->args[1]);
         $item2 = $this->getSymb($inst->args[2]);
         if ($item1->getType() != "string" || $item2->getType() != "string")
@@ -268,7 +267,7 @@ class Interpreter extends AbstractInterpreter
         $this->storage->add($frame, $name, "string", $res);
     }
 
-    private function strlen(Instruction $inst) {
+    private function strlen(Instruction $inst): void {
         $item = $this->getSymb($inst->args[0]);
         if ($item->getType() != "string")
             return;
@@ -278,7 +277,7 @@ class Interpreter extends AbstractInterpreter
         $this->storage->add($frame, $name, "int", $res);
     }
 
-    private function getchar(Instruction $inst) {
+    private function getchar(Instruction $inst): void {
         $item1 = $this->getSymb($inst->args[1]);
         $item2 = $this->getSymb($inst->args[2]);
         if ($item1->getType() != "string" || $item2->getType() != "int")
@@ -292,14 +291,14 @@ class Interpreter extends AbstractInterpreter
         $this->storage->add($frame, $name, "string", $res);
     }
 
-    private function setchar(Instruction $inst) {
+    private function setchar(Instruction $inst): void {
         $item1 = $this->getSymb($inst->args[1]);
         $item2 = $this->getSymb($inst->args[2]);
         if ($item1->getType() != "int" || $item2->getType() != "string")
             throw new OperandTypeException("SETCHAR excepts int and string");
 
         list($frame, $name) = explode('@', $inst->args[0]->getValue());
-        $strArr = str_split($this->storage->get($frame, $name));
+        $strArr = str_split($this->storage->get($frame, $name)->getValue());
 
         if (!isset($item2->getValue()[0]) ||
             !isset($strArr[(int)$item1->getValue()]))
@@ -310,7 +309,7 @@ class Interpreter extends AbstractInterpreter
         $this->storage->add($frame, $name, "string", $res);
     }
 
-    private function type(Instruction $inst) {
+    private function type(Instruction $inst): void {
         $item = $this->getSymb($inst->args[0]);
 
         $res = $item->getType() ?? "string";
@@ -318,15 +317,20 @@ class Interpreter extends AbstractInterpreter
         $this->storage->add($frame, $name, "string", $res);
     }
 
-    private function jump(Instruction $inst) {
-        /// Need to set the position
-        $pos = $this->storage->getLabel($inst->args[0]->getValue());
+    private function jump(Instruction $inst): void {
+        $label = $inst->args[0]->getValue();
+        $pos = $this->storage->getLabel($label);
+        if (!$pos) {
+            throw new SemanticException(
+                "Label '" . $label . "' doesn't exist");
+        }
+
         reset($this->instructions);
         while (key($this->instructions) !== $pos &&
                next($this->instructions) !== false);
     }
 
-    private function jumpifeq(Instruction $inst) {
+    private function jumpifeq(Instruction $inst): void {
         $item1 = $this->getSymb($inst->args[1]);
         $item2 = $this->getSymb($inst->args[2]);
         if ($item1->getType() != $item2->getType())
@@ -335,14 +339,13 @@ class Interpreter extends AbstractInterpreter
         if ($item1->getValue() != $item2->getValue())
             return;
 
-        /// Need to set the position
         $pos = $this->storage->getLabel($inst->args[0]->getValue());
         reset($this->instructions);
         while (key($this->instructions) !== $pos &&
                next($this->instructions) !== false);
     }
 
-    private function jumpifneq(Instruction $inst) {
+    private function jumpifneq(Instruction $inst): void {
         $item1 = $this->getSymb($inst->args[1]);
         $item2 = $this->getSymb($inst->args[2]);
         if ($item1->getType() != $item2->getType())
@@ -351,28 +354,30 @@ class Interpreter extends AbstractInterpreter
         if ($item1->getValue() == $item2->getValue())
             return;
 
-        /// Need to set the position
         $pos = $this->storage->getLabel($inst->args[0]->getValue());
         reset($this->instructions);
         while (key($this->instructions) !== $pos &&
                next($this->instructions) !== false);
     }
 
-    private function exit(Instruction $inst) {
+    private function exit(Instruction $inst): void {
         // TODO
     }
 
-    private function dprint(Instruction $inst) {
+    private function dprint(Instruction $inst): void {
         $item = $this->getSymb($inst->args[0]);
         match ($item->getType()) {
             "int" => $this->stderr->writeInt((int)$item->getValue()),
             "string" => $this->stderr->writeString($item->getValue()),
             "bool" => $this->stderr->writeBool($item->getValue()),
             "nil" => $this->stderr->writeString(''),
+            default => throw new OperandTypeException(
+                "Cannot print this type"
+            ),
         };
     }
 
-    private function breakInst() {
+    private function breakInst(): void {
         // TODO
     }
 
@@ -391,7 +396,7 @@ class Interpreter extends AbstractInterpreter
         return $item;
     }
 
-    private function save(string $var, ?string $type, mixed $value) {
+    private function save(string $var, ?string $type, mixed $value): void {
         list($frame, $name) = explode('@', $var);
         $this->storage->add($frame, $name, $type, $value);
     }
@@ -432,7 +437,7 @@ class Interpreter extends AbstractInterpreter
         return preg_replace_callback(
             '/\\\\([0-9]{3})/',
             function ($matches) {
-                return chr($matches[1]);
+                return chr((int)$matches[1]);
             },
             $text
         );

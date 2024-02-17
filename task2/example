@@ -30,7 +30,7 @@
         <arg3 type="string">a</arg3>
     </instruction>
     <instruction order="9" opcode="JUMP">
-        <arg1 type="label">while</arg1>
+        <arg1 type="label">test</arg1>
     </instruction>
     <instruction order="10" opcode="LABEL">
         <arg1 type="label">end</arg1>
