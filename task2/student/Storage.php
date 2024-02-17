@@ -76,9 +76,9 @@ class Storage {
      * Gets value from the memory
      * @param string $frame frame from where to get the value
      * @param string $name name of the item to get value of
-     * @return mixed value of stored item
+     * @return ?StorageItem value of stored item
      */
-    public function get(string $frame, string $name): StorageItem {
+    public function get(string $frame, string $name): ?StorageItem {
         return match ($frame) {
             "GF" => $this->global[$name],
             "LF" => $this->local[$name],

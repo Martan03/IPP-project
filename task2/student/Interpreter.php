@@ -97,10 +97,18 @@ class Interpreter extends AbstractInterpreter
             "RETURN" => $this->none(),
             "PUSHS" => $this->none(),
             "POPS" => $this->none(),
-            "ADD" => $this->calc($inst, "sum"),
-            "SUB" => $this->calc($inst, "sub"),
-            "MUL" => $this->calc($inst, "mul"),
-            "IDIV" => $this->calc($inst, "div"),
+            "ADD" => $this->calc($inst, function (int $x, int $y) {
+                return $this->sum($x, $y);
+            }),
+            "SUB" => $this->calc($inst, function (int $x, int $y) {
+                return $this->sub($x, $y);
+            }),
+            "MUL" => $this->calc($inst, function (int $x, int $y) {
+                return $this->mul($x, $y);
+            }),
+            "IDIV" => $this->calc($inst, function (int $x, int $y) {
+                return $this->div($x, $y);
+            }),
             "LT" => $this->cmp($inst, "lt"),
             "GT" => $this->gt($inst, "gt"),
             "EQ" => $this->eq($inst, "eq"),
@@ -142,7 +150,7 @@ class Interpreter extends AbstractInterpreter
             throw new SemanticException();
     }
 
-    private function calc(Instruction $inst, string $calculate): void {
+    private function calc(Instruction $inst, callable $calculate): void {
         $item1 = $this->getSymb($inst->args[1]);
         $item2 = $this->getSymb($inst->args[2]);
         if ($item1->getType() != 'int' || $item2->getType() != 'int')
