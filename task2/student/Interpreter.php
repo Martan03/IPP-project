@@ -49,7 +49,13 @@ class Interpreter extends AbstractInterpreter
         $instructions = [];
         $dom = $this->source->getDOMDocument();
 
-        foreach ($dom->getElementsByTagName('instruction') as $opcode) {
+        $root = $dom->documentElement;
+        if ($root->nodeName !== 'program')
+            throw new XMLException();
+        if ($root->getAttribute('language') !== "IPPcode24")
+            throw new XMLException();
+
+        foreach ($root->getElementsByTagName('instruction') as $opcode) {
             $inst = new Instruction($opcode->getAttribute("opcode"));
 
             foreach ($opcode->childNodes as $arg) {
