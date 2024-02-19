@@ -6,8 +6,9 @@ Tokens definition
 
 from enum import Enum
 
-# Token types
 class TokenType(Enum):
+    """Token enumaration contains all token types"""
+
     # Label
     LABEL = "label"
     # Not allowed label, used for the header
@@ -27,6 +28,8 @@ class TokenType(Enum):
     EOF = "eof"
 
 class Token:
+    """Token class containing type as TokenType and value of the token"""
+
     # Constructs new token of given type with given value
     def __init__(self, type, value):
         self.type = type

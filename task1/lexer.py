@@ -14,8 +14,9 @@ DATA_TYPES = {"int", "bool", "string", "nil"}
 STORE_TYPE = {"GF", "LF", "TF"}
 SPEC_CHARS = {'_', '-', '$', '&', '%', '*', '!', '?'}
 
-# Implements lexer
 class Lexer:
+    """Lexer class breaks given text to tokens"""
+
     def __init__(self, text):
         self.text = text
         self.cur_char = self.text[0] if len(self.text) > 0 else None

@@ -15,6 +15,8 @@ from token import TokenType
 from constants import INSTRUCTIONS
 
 class Parser:
+    """Parser class contains methods for parsing given code"""
+
     # Constructs new parser
     def __init__(self, text):
         self.lexer = Lexer(text)
