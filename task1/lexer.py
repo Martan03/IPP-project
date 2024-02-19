@@ -1,3 +1,10 @@
+"""
+Author: Martin Slezák - xsleza26
+
+Lexer implementation for IPPcode24
+- next function gets next token
+"""
+
 import re
 import sys
 

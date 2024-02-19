@@ -1,4 +1,8 @@
-#!/usr/bin/python3
+"""
+Author: Martin Slezák - xsleza26
+
+Contains main and basic argument parsing
+"""
 import sys
 
 from parsing import Parser

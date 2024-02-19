@@ -1,3 +1,9 @@
+"""
+Author: Martin Slezák - xsleza26
+
+Constants definition
+"""
+
 INSTRUCTIONS = {
     "MOVE": ["var", "symb"],
     "CREATEFRAME": [],

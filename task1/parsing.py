@@ -1,3 +1,10 @@
+"""
+Author: Martin Slezák - xsleza26
+
+Parses the code to final XML
+- parse function parses the code and returns final XML
+"""
+
 import sys
 from xml.dom.minidom import parseString
 import xml.etree.ElementTree as ET

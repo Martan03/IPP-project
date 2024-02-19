@@ -1,3 +1,9 @@
+"""
+Author: Martin Slezák - xsleza26
+
+Tokens definition
+"""
+
 from enum import Enum
 
 # Token types
