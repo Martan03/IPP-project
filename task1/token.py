@@ -31,6 +31,6 @@ class Token:
     """Token class containing type as TokenType and value of the token"""
 
     # Constructs new token of given type with given value
-    def __init__(self, type, value):
-        self.type = type
+    def __init__(self, token_type, value):
+        self.type = token_type
         self.value = value

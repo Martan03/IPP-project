@@ -7,8 +7,8 @@ import sys
 
 from parsing import Parser
 
-# Displays help
 def show_help():
+    """Prints help"""
     print("""IPPcode24 Parser
 Usage: python parse.py [options]
 
@@ -22,21 +22,20 @@ Return codes:
 22  : invalid or not known instruction in code
 23  : other lexical or syntax error""")
 
-# Reads code from stdin and make parser parse it
 def parse_input():
-    # Gets code from stdin
+    """Reads code from stdin and make parser parse it"""
     try:
-        input = sys.stdin.read()
-    except IOError as e:
+        text = sys.stdin.read()
+    except IOError as _:
         print("error: reading input", file=sys.stderr)
         sys.exit(11)
 
     # Parses the code
-    parser = Parser(input)
+    parser = Parser(text)
     print(parser.parse())
 
-# Parses arguments and runs the program
 def main():
+    """Parses arguments and runs the program"""
     if len(sys.argv) == 1:
         parse_input()
     elif (len(sys.argv) == 2 and

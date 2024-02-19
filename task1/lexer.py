@@ -24,55 +24,54 @@ class Lexer:
         self.value = ""
         self.pos = 0
 
-    # Gets next token
     def next(self):
+        """Gets next token"""
         while self.cur_char is not None:
             # New line
             if self.cur_char == '\n':
-                self.next_char()
+                self._next_char()
                 return Token(TokenType.EOL, '\n')
 
             # Skips whitespace
             if self.cur_char.isspace():
-                self.next_char()
+                self._next_char()
                 continue
 
             # Skips comments
             if self.cur_char == '#':
-                self.skip_comment()
+                self._skip_comment()
                 continue
 
             self.value = ""
-            return self.read_literal()
+            return self._read_literal()
 
         return Token(TokenType.EOF, '')
 
     # Gets next char in text
-    def next_char(self):
+    def _next_char(self):
         self.pos += 1
         if len(self.text) > self.pos:
             self.cur_char = self.text[self.pos]
         else:
             self.cur_char = None
 
-    # Skips comments
-    def skip_comment(self):
+    # Skips comment
+    def _skip_comment(self):
         while self.cur_char is not None and self.cur_char != '\n':
-            self.next_char()
+            self._next_char()
 
     # Reads literal
-    def read_literal(self):
+    def _read_literal(self):
         while (self.cur_char is not None and
                not self.cur_char.isspace() and
                self.cur_char != '#'):
             if self.cur_char == '@':
                 if self.value in STORE_TYPE:
-                    return self.read_var()
-                else:
-                    return self.read_symb()
+                    return self._read_var()
+                return self._read_symb()
 
             self.value += self.cur_char
-            self.next_char()
+            self._next_char()
 
         if self.value in DATA_TYPES:
             return Token(TokenType.TYPE, self.value)
@@ -84,49 +83,49 @@ class Lexer:
         return Token(TokenType.LABEL, self.value)
 
     # Reads variable
-    def read_var(self):
+    def _read_var(self):
         self.value += self.cur_char
-        self.next_char()
+        self._next_char()
 
         if not self.cur_char.isalpha() and self.cur_char not in SPEC_CHARS:
             print("error: invalid variable name", file=sys.stderr)
             sys.exit(23)
 
         self.value += self.cur_char
-        self.next_char()
+        self._next_char()
         while (self.cur_char is not None and
                not self.cur_char.isspace() and
                self.cur_char != '#'):
             self.value += self.cur_char
-            self.next_char()
+            self._next_char()
 
         return Token(TokenType.VAR, self.value)
 
     # Reads symbol
-    def read_symb(self):
+    def _read_symb(self):
         type_val = self.value
         self.value = ""
-        self.next_char()
+        self._next_char()
 
         while (self.cur_char is not None and
                not self.cur_char.isspace() and
                self.cur_char != '#'):
             self.value += self.cur_char
-            self.next_char()
+            self._next_char()
 
-        type = TokenType.EOF
+        token_type = TokenType.EOF
         valid = True
         if type_val == "string":
-            type = TokenType.STRING
+            token_type = TokenType.STRING
         elif type_val == "int":
-            valid = self._check_int(self.value)
-            type = TokenType.INT
+            valid = _check_int(self.value)
+            token_type = TokenType.INT
         elif type_val == "bool":
-            valid = self._check_bool(self.value)
-            type = TokenType.BOOL
+            valid = _check_bool(self.value)
+            token_type = TokenType.BOOL
         elif type_val == "nil":
-            valid = self._check_nil(self.value)
-            type = TokenType.NIL
+            valid = _check_nil(self.value)
+            token_type = TokenType.NIL
         else:
             print("error: invalid data type: " + type_val, file=sys.stderr)
             sys.exit(23)
@@ -137,17 +136,17 @@ class Lexer:
             )
             sys.exit(23)
 
-        return Token(type, self.value)
+        return Token(token_type, self.value)
 
-    # Checks if value is bool
-    def _check_bool(self, val):
-        return val == "true" or val == "false"
+# Checks if value is bool
+def _check_bool(val):
+    return val in ('true', 'false')
 
-    # Checks if value is int
-    def _check_int(self, val):
-        pattern = r'^([+-]?)(0o[0-7]+|0x[0-9a-fA-F]+|\d+)$'
-        return re.match(pattern, val) is not None
+# Checks if value is int
+def _check_int(val):
+    pattern = r'^([+-]?)(0o[0-7]+|0x[0-9a-fA-F]+|\d+)$'
+    return re.match(pattern, val) is not None
 
-    # Checks if value is nil
-    def _check_nil(self, val):
-        return val == "nil"
+# Checks if value is nil
+def _check_nil(val):
+    return val == "nil"

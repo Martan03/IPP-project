@@ -9,15 +9,14 @@ import sys
 from xml.dom.minidom import parseString
 import xml.etree.ElementTree as ET
 
-from lexer import Lexer
 from token import TokenType
+from lexer import Lexer
 
 from constants import INSTRUCTIONS
 
 class Parser:
     """Parser class contains methods for parsing given code"""
 
-    # Constructs new parser
     def __init__(self, text):
         self.lexer = Lexer(text)
         self.token = self.lexer.next()
@@ -25,8 +24,8 @@ class Parser:
         self.xml.set("language", "IPPcode24")
         self.order = 1
 
-    # Parses given text
     def parse(self):
+        """Parses given text"""
         self._parse_header()
 
         # Parses tokens until end of file
@@ -55,8 +54,7 @@ class Parser:
 
         # Checks for new line after header or end of file
         self.token = self.lexer.next()
-        if (self.token.type != TokenType.EOL and
-            self.token.type != TokenType.EOF):
+        if self.token.type in (TokenType.EOL, TokenType.EOF):
             print("error: missing newline after header", file=sys.stderr)
             sys.exit(21)
 
@@ -82,19 +80,18 @@ class Parser:
         exp_args = INSTRUCTIONS[opcode]
         self.token = self.lexer.next()
         for i, arg_type in enumerate(exp_args):
-            (valid, t) = self._is_arg_valid(arg_type)
+            (valid, token_type) = self._is_arg_valid(arg_type)
             if not valid:
                 print("error: invalid argument type", file=sys.stderr)
                 sys.exit(23)
             # Creates arg element for instruction in XML
             arg_el = ET.SubElement(opcode_el, f"arg{i + 1}")
-            arg_el.set("type", t)
+            arg_el.set("type", token_type)
             arg_el.text = self.token.value
             self.token = self.lexer.next()
 
         # Checks if new line or end of file occures after instruction
-        if (self.token.type != TokenType.EOL and
-            self.token.type != TokenType.EOF):
+        if self.token.type in (TokenType.EOL, TokenType.EOF):
             print("error: no new line after instruction", file=sys.stderr)
             sys.exit(23)
 
@@ -104,20 +101,19 @@ class Parser:
     def _is_arg_valid(self, arg_type):
         if arg_type == "var" and self.token.type == TokenType.VAR:
             return (True, self.token.type.value)
-        elif arg_type == "symb" and self._is_symbol(self.token.type):
+        if arg_type == "symb" and _is_symbol(self.token.type):
             return (True, self.token.type.value)
-        elif arg_type == "label" and self._is_label(self.token.type):
+        if arg_type == "label" and _is_label(self.token.type):
             return (True, "label")
-        elif arg_type == "type" and self.token.type == TokenType.TYPE:
+        if arg_type == "type" and self.token.type == TokenType.TYPE:
             return (True, self.token.type.value)
         return (False, None)
 
-    # Checks if given type is symbol
-    def _is_symbol(self, type):
-        return (type == TokenType.VAR or type == TokenType.INT or
-                type == TokenType.BOOL or type == TokenType.STRING or
-                type == TokenType.NIL)
+# Checks if given type is symbol
+def _is_symbol(token_type):
+    return token_type in (TokenType.VAR, TokenType.INT, TokenType.BOOL,
+                            TokenType.STRING, TokenType.NIL)
 
-    # Checks if given type is label
-    def _is_label(self, type):
-        return (type == TokenType.TYPE or type == TokenType.LABEL)
+# Checks if given type is label
+def _is_label(token_type):
+    return token_type in (TokenType.TYPE, TokenType.LABEL)
