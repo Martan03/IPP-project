@@ -47,8 +47,7 @@ class Parser:
             self.token = self.lexer.next()
 
         # Checks if code contains header
-        if (self.token.type != TokenType.NALABEL or
-            self.token.value.lower() != ".ippcode24"):
+        if self.token.type is not TokenType.HEADER:
             print("error: missing header", file=sys.stderr)
             sys.exit(21)
 
@@ -63,6 +62,10 @@ class Parser:
         # Skips new line
         if self.token.type == TokenType.EOL:
             return
+
+        if self.token.type == TokenType.HEADER:
+            print("error: duplicate headers", file=sys.stderr)
+            sys.exit(23)
 
         # Line has to start with valid instruction
         opcode = self.token.value.upper()

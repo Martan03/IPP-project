@@ -11,8 +11,8 @@ class TokenType(Enum):
 
     # Label
     LABEL = "label"
-    # Not allowed label, used for the header
-    NALABEL = "nalabel"
+    # Symbol for header
+    HEADER = "header"
     # Variable
     VAR = "var"
     # Symbol tokens

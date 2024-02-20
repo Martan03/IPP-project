@@ -23,6 +23,7 @@ class Lexer:
         self.current = None
         self.value = ""
         self.pos = 0
+        self.header = False
 
     def next(self):
         """Gets next token"""
@@ -76,9 +77,17 @@ class Lexer:
         if self.value in DATA_TYPES:
             return Token(TokenType.TYPE, self.value)
 
+        if self.value.lower() == ".ippcode24":
+            return Token(TokenType.HEADER, self.value)
+
         if (self.value and not self.value[0].isalpha() and
             self.value[0] not in SPEC_CHARS):
-            return Token(TokenType.NALABEL, self.value)
+            if self.header:
+                print("error: unexpected: " + self.value, file=sys.stderr)
+                sys.exit(23)
+            else:
+                print("error: invalid header: " + self.value, file=sys.stderr)
+                sys.exit(21)
 
         return Token(TokenType.LABEL, self.value)
 
@@ -107,6 +116,9 @@ class Lexer:
         self.value = ""
         self._next_char()
 
+        if type_val == "string":
+            return self._read_string()
+
         while (self.cur_char is not None and
                not self.cur_char.isspace() and
                self.cur_char != '#'):
@@ -115,9 +127,7 @@ class Lexer:
 
         token_type = TokenType.EOF
         valid = True
-        if type_val == "string":
-            token_type = TokenType.STRING
-        elif type_val == "int":
+        if type_val == "int":
             valid = _check_int(self.value)
             token_type = TokenType.INT
         elif type_val == "bool":
@@ -137,6 +147,33 @@ class Lexer:
             sys.exit(23)
 
         return Token(token_type, self.value)
+
+    # Reads string
+    def _read_string(self):
+        while (self.cur_char is not None and
+               not self.cur_char.isspace() and
+               self.cur_char != '#'):
+            # Checks if escape sequence starts
+            if self.cur_char == '\\':
+                self._read_esc()
+            else:
+                self.value += self.cur_char
+                self._next_char()
+
+        return Token(TokenType.STRING, self.value)
+
+    # Reads escape sequence
+    def _read_esc(self):
+        self.value += self.cur_char
+        self._next_char()
+
+        for _ in range(3):
+            if self.cur_char is None or not self.cur_char.isdigit():
+                print("error: invalid escape sequence", file=sys.stderr)
+                sys.exit(23)
+            self.value += self.cur_char
+            self._next_char()
+
 
 # Checks if value is bool
 def _check_bool(val):
