@@ -54,7 +54,7 @@ class Parser:
 
         # Checks for new line after header or end of file
         self.token = self.lexer.next()
-        if self.token.type in (TokenType.EOL, TokenType.EOF):
+        if self.token.type not in (TokenType.EOL, TokenType.EOF):
             print("error: missing newline after header", file=sys.stderr)
             sys.exit(21)
 
@@ -91,7 +91,7 @@ class Parser:
             self.token = self.lexer.next()
 
         # Checks if new line or end of file occures after instruction
-        if self.token.type in (TokenType.EOL, TokenType.EOF):
+        if self.token.type not in (TokenType.EOL, TokenType.EOF):
             print("error: no new line after instruction", file=sys.stderr)
             sys.exit(23)
 
