@@ -12,7 +12,6 @@ from token import Token, TokenType
 
 DATA_TYPES = {"int", "bool", "string", "nil"}
 STORE_TYPE = {"GF", "LF", "TF"}
-SPEC_CHARS = {'_', '-', '$', '&', '%', '*', '!', '?'}
 
 NAME_REX = re.compile(r'^[a-zA-Z_\-$&%*!?][a-zA-Z_\-$&%*!?0-9]*$')
 STR_REX = re.compile(r'^([^ #\\]*(\\[0-9][0-9][0-9])*)*$')
@@ -24,7 +23,6 @@ class Lexer:
     def __init__(self, text):
         self.text = text
         self.cur_char = self.text[0] if len(self.text) > 0 else None
-        self.current = None
         self.value = ""
         self.pos = 0
         self.header = False
