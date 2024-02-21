@@ -65,7 +65,7 @@ def parse_args(args):
                 add_arg(stat, StatType.BAD_JMP)
             case "--frequent":
                 add_arg(stat, StatType.FREQ)
-            case "eol":
+            case "--eol":
                 add_arg(stat, StatType.EOL)
             case _:
                 if arg.startswith("--stats="):

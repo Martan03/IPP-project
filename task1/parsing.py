@@ -23,6 +23,8 @@ class Parser:
         self.xml = ET.Element("program")
         self.xml.set("language", "IPPcode24")
         self.order = 1
+
+        self.freq = {}
         self.labels = []
         self.back_jmp = 0
         self.fw_jmp = 0
@@ -46,6 +48,9 @@ class Parser:
             else:
                 jumps.append(jmp)
         self.jmp = jumps
+        self.freq = dict(sorted(
+            self.freq.items(), key=lambda item: item[1], reverse=True)
+        )
 
         # Creates XML code
         dom = parseString(ET.tostring(self.xml, encoding="unicode"))
@@ -86,6 +91,12 @@ class Parser:
             opcode not in INSTRUCTIONS):
             print("error: invalid instruction: " + opcode, file=sys.stderr)
             sys.exit(22)
+
+        # Calculates frequency of opcodes
+        if opcode in self.freq:
+            self.freq[opcode] += 1
+        else:
+            self.freq[opcode] = 1
 
         # Creates instruction element in XML
         opcode_el = ET.SubElement(self.xml, "instruction")

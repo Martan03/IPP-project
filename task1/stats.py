@@ -46,8 +46,11 @@ class Stats:
                 case StatType.BAD_JMP:
                     print(len(parser.jmp), file=file)
                 case StatType.FREQ:
-                    ()
+                    self._print_freq(file, parser)
                 case StatType.PRINT:
                     print(self.text.pop(0), file=file)
                 case StatType.EOL:
                     print("", file=file)
+
+    def _print_freq(self, file, parser):
+        print(",".join(parser.freq.keys()), file=file)
