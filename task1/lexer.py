@@ -14,6 +14,8 @@ DATA_TYPES = {"int", "bool", "string", "nil"}
 STORE_TYPE = {"GF", "LF", "TF"}
 SPEC_CHARS = {'_', '-', '$', '&', '%', '*', '!', '?'}
 
+NAME_REX = re.compile(r'^[a-zA-Z_\-$&%*!?][a-zA-Z_\-$&%*!?0-9]*$')
+
 class Lexer:
     """Lexer class breaks given text to tokens"""
 
@@ -65,9 +67,7 @@ class Lexer:
 
     # Reads literal
     def _read_literal(self):
-        while (self.cur_char is not None and
-               not self.cur_char.isspace() and
-               self.cur_char != '#'):
+        while self._is_end_char(self.cur_char):
             if self.cur_char == '@':
                 if self.value in STORE_TYPE:
                     return self._read_var()
@@ -80,37 +80,34 @@ class Lexer:
             return Token(TokenType.TYPE, self.value)
 
         if self.value.lower() == ".ippcode24":
+            self.header = True
             return Token(TokenType.HEADER, self.value)
 
-        if (self.value and not self.value[0].isalpha() and
-            self.value[0] not in SPEC_CHARS):
-            if self.header:
-                print("error: unexpected: " + self.value, file=sys.stderr)
-                sys.exit(23)
-            else:
-                print("error: invalid header: " + self.value, file=sys.stderr)
-                sys.exit(21)
+        if NAME_REX.match(self.value):
+            return Token(TokenType.LABEL, self.value)
 
-        return Token(TokenType.LABEL, self.value)
+        if self.header:
+            print("error: unexpected: " + self.value, file=sys.stderr)
+            sys.exit(23)
+        else:
+            print("error: invalid header: " + self.value, file=sys.stderr)
+            sys.exit(21)
 
     # Reads variable
     def _read_var(self):
-        self.value += self.cur_char
+        frame = self.value + self.cur_char
+        self.value = ""
         self._next_char()
 
-        if not self.cur_char.isalpha() and self.cur_char not in SPEC_CHARS:
-            print("error: invalid variable name", file=sys.stderr)
-            sys.exit(23)
-
-        self.value += self.cur_char
-        self._next_char()
-        while (self.cur_char is not None and
-               not self.cur_char.isspace() and
-               self.cur_char != '#'):
+        while self._is_end_char(self.cur_char):
             self.value += self.cur_char
             self._next_char()
 
-        return Token(TokenType.VAR, self.value)
+        if NAME_REX.match(self.value):
+            return Token(TokenType.VAR, frame + self.value)
+
+        print("error: invalid variable name: " + self.value, file=sys.stderr)
+        sys.exit(23)
 
     # Reads symbol
     def _read_symb(self):
@@ -121,9 +118,7 @@ class Lexer:
         if type_val == "string":
             return self._read_string()
 
-        while (self.cur_char is not None and
-               not self.cur_char.isspace() and
-               self.cur_char != '#'):
+        while self._is_end_char(self.cur_char):
             self.value += self.cur_char
             self._next_char()
 
@@ -152,9 +147,7 @@ class Lexer:
 
     # Reads string
     def _read_string(self):
-        while (self.cur_char is not None and
-               not self.cur_char.isspace() and
-               self.cur_char != '#'):
+        while self._is_end_char(self.cur_char):
             # Checks if escape sequence starts
             if self.cur_char == '\\':
                 self._read_esc()
@@ -176,6 +169,9 @@ class Lexer:
             self.value += self.cur_char
             self._next_char()
 
+    @staticmethod
+    def _is_end_char(val):
+        return val is not None and not val.isspace() and val != '#'
 
     # Checks if value is bool
     @staticmethod
