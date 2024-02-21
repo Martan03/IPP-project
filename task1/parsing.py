@@ -38,7 +38,7 @@ class Parser:
             self.token = self.lexer.next()
 
         # Creates XML code
-        dom = ET.tostring(self.xml, encoding="unicode")
+        dom = parseString(ET.tostring(self.xml, encoding="unicode"))
         xml_bytes = dom.toprettyxml(indent="    ", encoding="UTF-8")
         pretty_xml = xml_bytes.decode('UTF-8')
         return pretty_xml
