@@ -16,6 +16,7 @@ SPEC_CHARS = {'_', '-', '$', '&', '%', '*', '!', '?'}
 
 NAME_REX = re.compile(r'^[a-zA-Z_\-$&%*!?][a-zA-Z_\-$&%*!?0-9]*$')
 STR_REX = re.compile(r'^([^ #\\]*(\\[0-9][0-9][0-9])*)*$')
+INT_REX = re.compile(r'^([+-]?)(0o[0-7]+|0x[0-9a-fA-F]+|\d+)$')
 
 class Lexer:
     """Lexer class breaks given text to tokens"""
@@ -120,19 +121,17 @@ class Lexer:
             self.value += self.cur_char
             self._next_char()
 
-        token_type = TokenType.EOF
-        valid = True
         if type_val == "string":
             valid = STR_REX.match(self.value)
             token_type = TokenType.STRING
         elif type_val == "int":
-            valid = self._check_int(self.value)
+            valid = INT_REX.match(self.value)
             token_type = TokenType.INT
         elif type_val == "bool":
-            valid = self._check_bool(self.value)
+            valid = self.value in ("true", "false")
             token_type = TokenType.BOOL
         elif type_val == "nil":
-            valid = self._check_nil(self.value)
+            valid = self.value == "nil"
             token_type = TokenType.NIL
         else:
             print("error: invalid data type: " + type_val, file=sys.stderr)
@@ -140,7 +139,8 @@ class Lexer:
 
         if not valid:
             print(
-                "error: invalid symbol value: "  + self.value, file=sys.stderr
+                f"error: invalid {type_val} value: {self.value}",
+                file=sys.stderr
             )
             sys.exit(23)
 
@@ -149,19 +149,3 @@ class Lexer:
     @staticmethod
     def _is_end_char(val):
         return val is not None and not val.isspace() and val != '#'
-
-    # Checks if value is bool
-    @staticmethod
-    def _check_bool(val):
-        return val in ('true', 'false')
-
-    # Checks if value is int
-    @staticmethod
-    def _check_int(val):
-        pattern = r'^([+-]?)(0o[0-7]+|0x[0-9a-fA-F]+|\d+)$'
-        return re.match(pattern, val) is not None
-
-    # Checks if value is nil
-    @staticmethod
-    def _check_nil(val):
-        return val == "nil"
