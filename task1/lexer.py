@@ -15,6 +15,7 @@ STORE_TYPE = {"GF", "LF", "TF"}
 SPEC_CHARS = {'_', '-', '$', '&', '%', '*', '!', '?'}
 
 NAME_REX = re.compile(r'^[a-zA-Z_\-$&%*!?][a-zA-Z_\-$&%*!?0-9]*$')
+STR_REX = re.compile(r'^([^ #\\]*(\\[0-9][0-9][0-9])*)*$')
 
 class Lexer:
     """Lexer class breaks given text to tokens"""
@@ -115,16 +116,16 @@ class Lexer:
         self.value = ""
         self._next_char()
 
-        if type_val == "string":
-            return self._read_string()
-
         while self._is_end_char(self.cur_char):
             self.value += self.cur_char
             self._next_char()
 
         token_type = TokenType.EOF
         valid = True
-        if type_val == "int":
+        if type_val == "string":
+            valid = STR_REX.match(self.value)
+            token_type = TokenType.STRING
+        elif type_val == "int":
             valid = self._check_int(self.value)
             token_type = TokenType.INT
         elif type_val == "bool":
@@ -144,30 +145,6 @@ class Lexer:
             sys.exit(23)
 
         return Token(token_type, self.value)
-
-    # Reads string
-    def _read_string(self):
-        while self._is_end_char(self.cur_char):
-            # Checks if escape sequence starts
-            if self.cur_char == '\\':
-                self._read_esc()
-            else:
-                self.value += self.cur_char
-                self._next_char()
-
-        return Token(TokenType.STRING, self.value)
-
-    # Reads escape sequence
-    def _read_esc(self):
-        self.value += self.cur_char
-        self._next_char()
-
-        for _ in range(3):
-            if self.cur_char is None or not self.cur_char.isdigit():
-                print("error: invalid escape sequence", file=sys.stderr)
-                sys.exit(23)
-            self.value += self.cur_char
-            self._next_char()
 
     @staticmethod
     def _is_end_char(val):
