@@ -25,7 +25,8 @@ class Parser:
         self.order = 1
         self.labels = []
         self.back_jmp = 0
-        self.bad_jmp = []
+        self.fw_jmp = 0
+        self.jmp = []
 
     def parse(self):
         """Parses given text"""
@@ -36,6 +37,15 @@ class Parser:
         while self.token.type != TokenType.EOF:
             self._parse_line()
             self.token = self.lexer.next()
+
+        # Finishes stats calculating
+        jumps = []
+        for jmp in self.jmp:
+            if jmp in self.labels:
+                self.fw_jmp += 1
+            else:
+                jumps.append(jmp)
+        self.jmp = jumps
 
         # Creates XML code
         dom = parseString(ET.tostring(self.xml, encoding="unicode"))
@@ -114,7 +124,7 @@ class Parser:
                 if self.token.value in self.labels:
                     self.back_jmp += 1
                 else:
-                    self.bad_jmp.append(self.token.value)
+                    self.jmp.append(self.token.value)
             elif opcode == "LABEL":
                 if self.token.value not in self.labels:
                     self.labels.append(self.token.value)
