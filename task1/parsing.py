@@ -89,7 +89,7 @@ class Parser:
         opcode = self.token.value.upper()
         if (self.token.type != TokenType.LABEL or
             opcode not in INSTRUCTIONS):
-            print("error: invalid instruction: " + opcode, file=sys.stderr)
+            print(f"error: invalid instruction: {opcode}", file=sys.stderr)
             sys.exit(22)
 
         # Calculates frequency of opcodes
@@ -148,7 +148,7 @@ class Parser:
     @staticmethod
     def _is_symbol(token_type):
         return token_type in (TokenType.VAR, TokenType.INT, TokenType.BOOL,
-                            TokenType.STRING, TokenType.NIL)
+                              TokenType.STRING, TokenType.NIL)
 
     # Checks if given type is label
     @staticmethod

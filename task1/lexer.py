@@ -13,6 +13,7 @@ from token import Token, TokenType
 DATA_TYPES = {"int", "bool", "string", "nil"}
 STORE_TYPE = {"GF", "LF", "TF"}
 
+# Regex for matching symbol values
 NAME_REX = re.compile(r'^[a-zA-Z_\-$&%*!?][a-zA-Z_\-$&%*!?0-9]*$')
 STR_REX = re.compile(r'^([^ #\\]*(\\[0-9][0-9][0-9])*)*$')
 INT_REX = re.compile(r'^([+-]?)(0o[0-7]+|0x[0-9a-fA-F]+|\d+)$')
@@ -87,10 +88,10 @@ class Lexer:
             return Token(TokenType.LABEL, self.value)
 
         if self.header:
-            print("error: unexpected: " + self.value, file=sys.stderr)
+            print(f"error: unexpected: {self.value}", file=sys.stderr)
             sys.exit(23)
         else:
-            print("error: invalid header: " + self.value, file=sys.stderr)
+            print(f"error: invalid header: {self.value}", file=sys.stderr)
             sys.exit(21)
 
     # Reads variable
@@ -106,7 +107,7 @@ class Lexer:
         if NAME_REX.match(self.value):
             return Token(TokenType.VAR, frame + self.value)
 
-        print("error: invalid variable name: " + self.value, file=sys.stderr)
+        print(f"error: invalid variable name: {self.value}", file=sys.stderr)
         sys.exit(23)
 
     # Reads symbol
@@ -132,7 +133,7 @@ class Lexer:
             valid = self.value == "nil"
             token_type = TokenType.NIL
         else:
-            print("error: invalid data type: " + type_val, file=sys.stderr)
+            print(f"error: invalid data type: {type_val}", file=sys.stderr)
             sys.exit(23)
 
         if not valid:
