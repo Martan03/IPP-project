@@ -23,6 +23,9 @@ class Parser:
         self.xml = ET.Element("program")
         self.xml.set("language", "IPPcode24")
         self.order = 1
+        self.labels = []
+        self.back_jmp = 0
+        self.bad_jmp = []
 
     def parse(self):
         """Parses given text"""
@@ -101,12 +104,20 @@ class Parser:
         self.order += 1
 
     # Checks if current token is correct type
-    def _is_arg_valid(self, arg_type):
+    def _is_arg_valid(self, opcode, arg_type):
         if arg_type == "var" and self.token.type == TokenType.VAR:
             return (True, self.token.type.value)
         if arg_type == "symb" and _is_symbol(self.token.type):
             return (True, self.token.type.value)
-        if arg_type == "label" and _is_label(self.token.type):
+        if arg_type == "label" and _is_label(self.tokent.type):
+            if opcode in ("JUMP", "JUMPIFEQ", "JUMPIFNEQ"):
+                if self.token.value in self.labels:
+                    self.back_jmp += 1
+                else:
+                    self.bad_jmp.append(self.token.value)
+            elif opcode == "LABEL":
+                if self.token.value not in self.labels:
+                    self.labels.append(self.token.value)
             return (True, "label")
         if arg_type == "type" and self.token.type == TokenType.TYPE:
             return (True, self.token.type.value)

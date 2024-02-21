@@ -24,6 +24,7 @@ class Lexer:
         self.value = ""
         self.pos = 0
         self.header = False
+        self.comments = 0
 
     def next(self):
         """Gets next token"""
@@ -58,6 +59,7 @@ class Lexer:
 
     # Skips comment
     def _skip_comment(self):
+        self.comments += 1
         while self.cur_char is not None and self.cur_char != '\n':
             self._next_char()
 
