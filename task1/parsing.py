@@ -38,7 +38,7 @@ class Parser:
             self.token = self.lexer.next()
 
         # Creates XML code
-        dom = parseString(ET.tostring(self.xml))
+        dom = ET.tostring(self.xml, encoding="unicode")
         xml_bytes = dom.toprettyxml(indent="    ", encoding="UTF-8")
         pretty_xml = xml_bytes.decode('UTF-8')
         return pretty_xml
@@ -86,7 +86,7 @@ class Parser:
         exp_args = INSTRUCTIONS[opcode]
         self.token = self.lexer.next()
         for i, arg_type in enumerate(exp_args):
-            (valid, token_type) = self._is_arg_valid(arg_type)
+            (valid, token_type) = self._is_arg_valid(opcode, arg_type)
             if not valid:
                 print("error: invalid argument type", file=sys.stderr)
                 sys.exit(23)
@@ -107,9 +107,9 @@ class Parser:
     def _is_arg_valid(self, opcode, arg_type):
         if arg_type == "var" and self.token.type == TokenType.VAR:
             return (True, self.token.type.value)
-        if arg_type == "symb" and _is_symbol(self.token.type):
+        if arg_type == "symb" and self._is_symbol(self.token.type):
             return (True, self.token.type.value)
-        if arg_type == "label" and _is_label(self.tokent.type):
+        if arg_type == "label" and self._is_label(self.token.type):
             if opcode in ("JUMP", "JUMPIFEQ", "JUMPIFNEQ"):
                 if self.token.value in self.labels:
                     self.back_jmp += 1
@@ -123,11 +123,13 @@ class Parser:
             return (True, self.token.type.value)
         return (False, None)
 
-# Checks if given type is symbol
-def _is_symbol(token_type):
-    return token_type in (TokenType.VAR, TokenType.INT, TokenType.BOOL,
+    # Checks if given type is symbol
+    @staticmethod
+    def _is_symbol(token_type):
+        return token_type in (TokenType.VAR, TokenType.INT, TokenType.BOOL,
                             TokenType.STRING, TokenType.NIL)
 
-# Checks if given type is label
-def _is_label(token_type):
-    return token_type in (TokenType.TYPE, TokenType.LABEL)
+    # Checks if given type is label
+    @staticmethod
+    def _is_label(token_type):
+        return token_type in (TokenType.TYPE, TokenType.LABEL)
