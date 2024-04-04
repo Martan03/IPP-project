@@ -2,9 +2,7 @@
 
 namespace IPP\Student;
 
-use DOMText;
 use IPP\Core\AbstractInterpreter;
-use IPP\Core\Exception\XMLException;
 use IPP\Student\Exception\OperandTypeException;
 use IPP\Student\Exception\OperandValueException;
 use IPP\Student\Exception\SemanticException;
@@ -19,13 +17,13 @@ class Interpreter extends AbstractInterpreter
     private Storage $storage;
     private ?int $pos;
 
-    public function execute(): int
-    {
-        $this->instructions = $this->parseXml();
-        $this->storage = new Storage();
-
+    public function execute(): int {
+        $parser = new XMLParser();
+        $parser->parse($this->source->getDOMDocument());
+        $this->instructions = $parser->get_instructions();
         ksort($this->instructions);
 
+        $this->storage = new Storage();
         $this->parseLabels();
 
         reset($this->instructions);
@@ -39,43 +37,6 @@ class Interpreter extends AbstractInterpreter
         echo var_dump($this->storage);
         */
         return 0;
-    }
-
-    /**
-     * Parses input XML and gets array of Instructions
-     * @return array<int, Instruction> array containing instructions
-     */
-    private function parseXml(): array {
-        $instructions = [];
-        $dom = $this->source->getDOMDocument();
-
-        $root = $dom->documentElement;
-        if ($root->nodeName !== 'program')
-            throw new XMLException();
-        if ($root->getAttribute('language') !== "IPPcode24")
-            throw new XMLException();
-
-        foreach ($root->getElementsByTagName('instruction') as $opcode) {
-            $inst = new Instruction($opcode->getAttribute("opcode"));
-
-            foreach ($opcode->childNodes as $arg) {
-                if ($arg instanceof DOMText)
-                    continue;
-
-                $inst->addArg(new Arg(
-                    $arg->getAttribute("type"),
-                    trim($arg->nodeValue ?? ""),
-                ));
-            }
-
-            $order = (int)$opcode->getAttribute("order") - 1;
-            if ($order < 0 || isset($instructions[$order]))
-                throw new XMLException();
-
-            $instructions[$order] = $inst;
-        }
-
-        return $instructions;
     }
 
     private function parseLabels(): void {

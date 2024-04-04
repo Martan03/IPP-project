@@ -152,7 +152,7 @@ class Storage {
 
     /**
      * Checks if item exists in the storage
-     * @param string $frame storage frame where to check for item
+     * @param string $frame storage frame where to check +;for item
      * @param string $name name of the item to check for
      * @return bool true if exists, else false
      */

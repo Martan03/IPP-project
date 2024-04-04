@@ -11,9 +11,7 @@ namespace IPP\Student;
  */
 class Instruction {
     public string $opcode;
-    /**
-     * @var array<int, Arg> arguments array
-     */
+    /** @var array<int, Arg> arguments array */
     public array $args;
 
     /**
