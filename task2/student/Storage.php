@@ -7,6 +7,7 @@
 namespace IPP\Student;
 
 use IPP\Student\Exception\FrameAccessException;
+use IPP\Student\Exception\ValueException;
 use IPP\Student\Exception\VarAccessException;
 
 /**
@@ -20,8 +21,10 @@ class Storage {
     /** @var ?array<string, StorageItem> temp storage frame */
     private ?array $temp;
 
-    /** @var array<int, array<string, StorageItem>> frame stack */
+    /** @var array<int, StorageItem> data stack */
     private array $stack;
+    /** @var array<int, array<string, StorageItem>> frame stack */
+    private array $frameStack;
 
     /** @var array<string, int> array containing labels */
     private array $labels;
@@ -33,7 +36,9 @@ class Storage {
         $this->global = [];
         $this->local = null;
         $this->temp = null;
+
         $this->stack = [];
+        $this->frameStack = [];
 
         $this->labels = [];
     }
@@ -105,10 +110,22 @@ class Storage {
         $this->temp = [];
     }
 
+    public function push(StorageItem $item): void {
+        $this->stack[] = $item;
+    }
+
+    public function pop(string $frame, string $name): void {
+        if (empty($this->stack))
+            throw new ValueException();
+
+        $item = array_pop($this->stack);
+        $this->add($frame, $name, $item->getType(), $item->getValue());
+    }
+
     /**
      * Pushes temp frame to the queue
      */
-    public function push(): void {
+    public function pushFrame(): void {
         if (!isset($this->temp))
             throw new FrameAccessException();
 
@@ -120,8 +137,8 @@ class Storage {
     /**
      * Pops temp frame from queue
      */
-    public function pop(): void {
-        $this->temp = array_shift($this->stack);
+    public function popFrame(): void {
+        $this->temp = array_pop($this->stack);
         $this->head = &$this->stack[count($this->stack) - 1];
     }
 

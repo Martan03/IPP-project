@@ -55,16 +55,16 @@ class Interpreter extends AbstractInterpreter
     }
 
     private function execInstruction(Instruction $inst): void {
-        match ($inst->opcode) {
+        match (strtoupper($inst->opcode)) {
             "MOVE" => $this->move($inst),
             "CREATEFRAME" => $this->storage->create(),
-            "PUSHFRAME" => $this->storage->push(),
-            "POPFRAME" => $this->storage->pop(),
+            "PUSHFRAME" => $this->storage->pushFrame(),
+            "POPFRAME" => $this->storage->popFrame(),
             "DEFVAR" => $this->defVar($inst),
             "CALL" => $this->none(),
             "RETURN" => $this->none(),
-            "PUSHS" => $this->none(),
-            "POPS" => $this->none(),
+            "PUSHS" => $this->pushs($inst),
+            "POPS" => $this->pops($inst),
             "ADD" => $this->calc($inst, [$this, "sum"]),
             "SUB" => $this->calc($inst, [$this, "sub"]),
             "MUL" => $this->calc($inst, [$this, "mul"]),
@@ -108,6 +108,16 @@ class Interpreter extends AbstractInterpreter
         list($frame, $name) = explode('@', $inst->args[0]->getValue());
         if (!$this->storage->defVar($frame, $name))
             throw new SemanticException();
+    }
+
+    private function pushs(Instruction $inst): void {
+        $item = $this->getSymb($inst->args[0]);
+        $this->storage->push($item);
+    }
+
+    private function pops(Instruction $inst): void {
+        list($frame, $name) = explode('@', $inst->args[0]->getValue());
+        $this->storage->pop($frame, $name);
     }
 
     private function calc(Instruction $inst, callable $calculate): void {
