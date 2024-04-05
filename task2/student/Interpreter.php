@@ -61,8 +61,8 @@ class Interpreter extends AbstractInterpreter
             "PUSHFRAME" => $this->storage->pushFrame(),
             "POPFRAME" => $this->storage->popFrame(),
             "DEFVAR" => $this->defVar($inst),
-            "CALL" => $this->none(),
-            "RETURN" => $this->none(),
+            "CALL" => $this->call($inst),
+            "RETURN" => $this->ret($inst),
             "PUSHS" => $this->pushs($inst),
             "POPS" => $this->pops($inst),
             "ADD" => $this->calc($inst, [$this, "sum"]),
@@ -108,6 +108,20 @@ class Interpreter extends AbstractInterpreter
         list($frame, $name) = explode('@', $inst->args[0]->getValue());
         if (!$this->storage->defVar($frame, $name))
             throw new SemanticException();
+    }
+
+    private function call(Instruction $inst): void {
+        next($this->instructions);
+        $pos = key($this->instructions);
+        $this->storage->pushCall($pos);
+
+        $this->jump($inst);
+    }
+
+    private function ret(Instruction $inst): void {
+        $pos = $this->storage->popCall();
+        while (key($this->instructions) !== $pos &&
+               next($this->instructions) !== false);
     }
 
     private function pushs(Instruction $inst): void {

@@ -25,6 +25,8 @@ class Storage {
     private array $stack;
     /** @var array<int, array<string, StorageItem>> frame stack */
     private array $frameStack;
+    /** @var array<int, int> */
+    private array $callStack;
 
     /** @var array<string, int> array containing labels */
     private array $labels;
@@ -39,6 +41,7 @@ class Storage {
 
         $this->stack = [];
         $this->frameStack = [];
+        $this->callStack = [];
 
         $this->labels = [];
     }
@@ -140,6 +143,16 @@ class Storage {
     public function popFrame(): void {
         $this->temp = array_pop($this->stack);
         $this->head = &$this->stack[count($this->stack) - 1];
+    }
+
+    public function pushCall(int $pos): void {
+        $this->callStack[] = $pos;
+    }
+
+    public function popCall(): int {
+        if (empty($this->callStack))
+            throw new ValueException();
+        return array_pop($this->callStack);
     }
 
     /**
