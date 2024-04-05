@@ -7,6 +7,7 @@ use IPP\Student\Exception\OperandTypeException;
 use IPP\Student\Exception\OperandValueException;
 use IPP\Student\Exception\SemanticException;
 use IPP\Student\Exception\StringOperationException;
+use IPP\Student\Exception\ValueException;
 
 class Interpreter extends AbstractInterpreter
 {
@@ -211,7 +212,7 @@ class Interpreter extends AbstractInterpreter
                 $this->replaceString($item->getValue())),
             "bool" => $this->stdout->writeBool($item->getValue()),
             "nil" => $this->stdout->writeString(''),
-            default => throw new OperandTypeException(
+            default => throw new ValueException(
                 "tried to print invalid type"
             ),
         };
@@ -229,9 +230,9 @@ class Interpreter extends AbstractInterpreter
     }
 
     private function strlen(Instruction $inst): void {
-        $item = $this->getSymb($inst->args[0]);
+        $item = $this->getSymb($inst->args[1]);
         if ($item->getType() != "string")
-            return;
+            throw new OperandTypeException();
 
         $res = strlen($item->getValue());
         list($frame, $name) = explode('@', $inst->args[0]->getValue());
@@ -244,8 +245,10 @@ class Interpreter extends AbstractInterpreter
         if ($item1->getType() != "string" || $item2->getType() != "int")
             throw new OperandTypeException("GETCHAR excepts string and int");
 
-        if (!isset($item1->getValue()[(int)$item2->getValue()]))
+        if (!isset($item1->getValue()[(int)$item2->getValue()])) {
+            echo $item1->getValue() . " " . $item2->getValue();
             throw new StringOperationException("GETCHAR index out of range");
+        }
 
         $res = $item1->getValue()[$item2->getValue()];
         list($frame, $name) = explode('@', $inst->args[0]->getValue());

@@ -9,6 +9,7 @@ namespace IPP\Student;
 use DOMDocument;
 use DOMElement;
 use IPP\Core\Exception\XMLException;
+use IPP\Student\Exception\XMLStructException;
 
 /**
  * Class that parses XML
@@ -31,7 +32,7 @@ class XMLParser {
 
         $program = $dom->firstElementChild;
         if (!$program || $program->nodeName !== "program")
-            throw new XMLException("Expected program tag");
+            throw new XMLStructException("Expected program tag");
 
         if ($program->getAttribute("language") !== "IPPcode24")
             throw new XMLException("Invalid program language");
@@ -58,13 +59,15 @@ class XMLParser {
      */
     private function parse_inst(DOMElement $element): void {
         if ($element->nodeName !== "instruction")
-            throw new XMLException("Expected instruction");
+            throw new XMLStructException("Expected instruction");
         if (!$element->hasAttribute("opcode"))
             throw new XMLException("Instruction has to contain opcode");
         if (!$element->hasAttribute("order"))
             throw new XMLException("Instruction has to contain order");
         if (!is_numeric($element->getAttribute("order")))
-            throw new XMLException("Instruction order has to be a number");
+            throw new XMLStructException(
+                "Instruction order has to be a number
+            ");
         if ($element->attributes->length > 2)
             throw new XMLException("Unexpected arguments in instruction");
 
@@ -78,7 +81,7 @@ class XMLParser {
 
         $order = (int)$element->getAttribute("order");
         if ($order <= 0 || isset($this->instructions[$order]))
-            throw new XMLException("Invalid or existing order");
+            throw new XMLStructException("Invalid or existing order");
 
         $this->instructions[$order] = $inst;
     }

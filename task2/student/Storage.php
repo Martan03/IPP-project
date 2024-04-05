@@ -7,31 +7,23 @@
 namespace IPP\Student;
 
 use IPP\Student\Exception\FrameAccessException;
+use IPP\Student\Exception\VarAccessException;
 
 /**
  * Class representing storage
  */
 class Storage {
-    /**
-     * @var array<string, StorageItem> global storage frame
-     */
+    /** @var array<string, StorageItem> global storage frame */
     private array $global;
-    /**
-     * @var array<string, StorageItem> local storage frame
-     */
-    private array $local;
-    /**
-     * @var ?array<string, StorageItem> temp storage frame
-     */
+    /** @var ?array<string, StorageItem> local storage frame */
+    private ?array $local;
+    /** @var ?array<string, StorageItem> temp storage frame */
     private ?array $temp;
-    /**
-     * @var array<int, array<string, StorageItem>> temp frames queue
-     */
-    private array $queue;
 
-    /**
-     * @var array<string, int> array containing labels
-     */
+    /** @var array<int, array<string, StorageItem>> frame stack */
+    private array $stack;
+
+    /** @var array<string, int> array containing labels */
     private array $labels;
 
     /**
@@ -39,9 +31,9 @@ class Storage {
      */
     public function __construct() {
         $this->global = [];
-        $this->local = [];
+        $this->local = null;
         $this->temp = null;
-        $this->queue = [];
+        $this->stack = [];
 
         $this->labels = [];
     }
@@ -78,11 +70,11 @@ class Storage {
      * @param string $name name of the item to get value of
      * @return ?StorageItem value of stored item
      */
-    public function get(string $frame, string $name): ?StorageItem {
+    public function get(string $frame, string $name): StorageItem {
         return match ($frame) {
-            "GF" => $this->global[$name],
-            "LF" => $this->local[$name],
-            "TF" => $this->temp[$name],
+            "GF" => $this->globalGet($name),
+            "LF" => $this->localGet($name),
+            "TF" => $this->tempGet($name),
             default => throw new FrameAccessException(),
         };
     }
@@ -117,7 +109,11 @@ class Storage {
      * Pushes temp frame to the queue
      */
     public function push(): void {
-        $this->queue[] = $this->temp;
+        if (!isset($this->temp))
+            throw new FrameAccessException();
+
+        $this->stack[] = $this->temp;
+        $this->local = &$this->stack[count($this->stack) - 1];
         $this->temp = null;
     }
 
@@ -125,7 +121,8 @@ class Storage {
      * Pops temp frame from queue
      */
     public function pop(): void {
-        $this->temp = array_shift($this->queue);
+        $this->temp = array_shift($this->stack);
+        $this->head = &$this->stack[count($this->stack) - 1];
     }
 
     /**
@@ -163,5 +160,27 @@ class Storage {
             "TF" => isset($this->temp[$name]),
             default => throw new FrameAccessException(),
         };
+    }
+
+    private function globalGet(string $name): StorageItem {
+        if (!isset($this->global[$name]))
+            throw new VarAccessException();
+        return $this->global[$name];
+    }
+
+    private function localGet(string $name): StorageItem {
+        if (!isset($this->local))
+            throw new FrameAccessException();
+        if (!isset($this->local[$name]))
+            throw new VarAccessException();
+        return $this->local[$name];
+    }
+
+    private function tempGet(string $name): StorageItem {
+        if (!isset($this->temp))
+            throw new FrameAccessException();
+        if (!isset($this->temp[$name]))
+            throw new VarAccessException();
+        return $this->temp[$name];
     }
 }
