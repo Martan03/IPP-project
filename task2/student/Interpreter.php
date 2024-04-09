@@ -3,6 +3,7 @@
 namespace IPP\Student;
 
 use IPP\Core\AbstractInterpreter;
+use IPP\Student\Exception\ExitException;
 use IPP\Student\Exception\OperandTypeException;
 use IPP\Student\Exception\OperandValueException;
 use IPP\Student\Exception\SemanticException;
@@ -17,6 +18,7 @@ class Interpreter extends AbstractInterpreter
     private array $instructions;
     private Storage $storage;
     private ?int $pos;
+    private int $exec = 0;
 
     public function execute(): int {
         $parser = new XMLParser();
@@ -28,9 +30,13 @@ class Interpreter extends AbstractInterpreter
         $this->parseLabels();
 
         reset($this->instructions);
-        while (($this->pos = key($this->instructions)) !== null) {
-            $this->execInstruction($this->instructions[$this->pos]);
-            next($this->instructions);
+        try {
+            while (($this->pos = key($this->instructions)) !== null) {
+                $this->execInstruction($this->instructions[$this->pos]);
+                next($this->instructions);
+            }
+        } catch (ExitException $e) {
+            return $e->ret_value;
         }
 
         /*
@@ -92,6 +98,7 @@ class Interpreter extends AbstractInterpreter
             "BREAK" => $this->breakInst(),
             default => function() {},
         };
+        $this->exec++;
     }
 
     private function none(): void {}
@@ -349,7 +356,14 @@ class Interpreter extends AbstractInterpreter
     }
 
     private function exit(Instruction $inst): void {
-        // TODO
+        $item = $this->getSymb($inst->args[0]);
+        if ($item->getType() != "int")
+            throw new OperandTypeException();
+
+        if ($item->getValue() < 0 || $item->getValue() > 9)
+            throw new OperandValueException("return type not in valid range");
+
+        throw new ExitException($item->getValue());
     }
 
     private function dprint(Instruction $inst): void {
@@ -366,7 +380,8 @@ class Interpreter extends AbstractInterpreter
     }
 
     private function breakInst(): void {
-        // TODO
+        $this->stderr->writeString("Executed instructions: " . $this->exec);
+        $this->stderr->writeString("\nCurrent instruction: " . $this->pos);
     }
 
 
