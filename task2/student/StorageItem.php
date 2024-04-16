@@ -18,8 +18,8 @@ class StorageItem {
      * @param mixed $value value of the item
      */
     public function __construct(?string $type, mixed $value) {
-        $this->type = $type;
         $this->value = $value;
+        $this->type = $type;
     }
 
     /**
