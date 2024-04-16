@@ -39,10 +39,6 @@ class Interpreter extends AbstractInterpreter
             return $e->ret_value;
         }
 
-        /*
-        echo "\nMemory:\n";
-        echo var_dump($this->storage);
-        */
         return 0;
     }
 
@@ -261,6 +257,8 @@ class Interpreter extends AbstractInterpreter
             return;
 
         $char = mb_chr($item->getValue(), "UTF-8");
+        // I get warning by this, which doesn't really make sense, since
+        // `mb_chr` returns `string|bool`
         if ($char === false)
             throw new StringOperationException("invalid ordinal value");
 
@@ -281,6 +279,8 @@ class Interpreter extends AbstractInterpreter
             throw new OperandTypeException();
 
         $res = mb_ord($item1->getValue()[$item2->getValue()]);
+        // I get warning by this, which doesn't really make sense, since
+        // `mb_ord` returns `int|bool`
         if ($res === false)
             throw new StringOperationException();
 
@@ -513,7 +513,6 @@ class Interpreter extends AbstractInterpreter
 
     /**
      * Prints interpret state to stderr
-     * @param Instruction $inst instruction containing operands
      */
     private function breakInst(): void {
         $this->stderr->writeString("Executed instructions: " . $this->exec);
@@ -586,8 +585,8 @@ class Interpreter extends AbstractInterpreter
 
     /**
      * Sums two values
-     * @param mixed $val1 first value
-     * @param mixed $val2 second value
+     * @param int $val1 first value
+     * @param int $val2 second value
      * @return int sum result
      */
     private function sum(int $val1, int $val2): int {
@@ -596,8 +595,8 @@ class Interpreter extends AbstractInterpreter
 
     /**
      * Subtracts two values
-     * @param mixed $val1 first value
-     * @param mixed $val2 second value
+     * @param int $val1 first value
+     * @param int $val2 second value
      * @return int subtraction result
      */
     private function sub(int $val1, int $val2): int {
@@ -606,8 +605,8 @@ class Interpreter extends AbstractInterpreter
 
     /**
      * Multiplies two values
-     * @param mixed $val1 first value
-     * @param mixed $val2 second value
+     * @param int $val1 first value
+     * @param int $val2 second value
      * @return int multiplication result
      */
     private function mul(int $val1, int $val2): int {
@@ -616,8 +615,8 @@ class Interpreter extends AbstractInterpreter
 
     /**
      * Divides two values
-     * @param mixed $val1 first value
-     * @param mixed $val2 second value
+     * @param int $val1 first value
+     * @param int $val2 second value
      * @return int division result
      */
     private function div(int $val1, int $val2): int {

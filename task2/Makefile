@@ -15,8 +15,11 @@ all: check
 pack: student/*
 	cd $(STUDENT_DIR) && zip -r $(LOGIN).zip  * -x __MACOSX/* .git/* && mv $(LOGIN).zip ../
 
+submit:
+	zip -r xsleza26.zip student ipp2.drawio.png readme2.md
+
 check: pack vendor
-	./is_it_ok.sh $(LOGIN).zip $(TEMP_DIR) $(TASK) 
+	./is_it_ok.sh $(LOGIN).zip $(TEMP_DIR) $(TASK)
 
 run-help: interpret.php
 	if [ "${HOSTNAME}" = "merlin.fit.vutbr.cz" ]; then php8.3 $(SCRIPT) --help; else php $(SCRIPT) --help; fi

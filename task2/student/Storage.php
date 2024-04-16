@@ -185,7 +185,7 @@ class Storage {
     /**
      * Gets label by its name
      * @param string $name name of the label to get
-     * @return ?int returns position of found label, else null
+     * @return int returns position of found label, else null
      */
     public function getLabel(string $name): int {
         return $this->labels[$name];
@@ -217,12 +217,12 @@ class Storage {
 
     /**
      * Adds storage item to the storage frame
-     * @param array &$frame reference to frame to add item to
+     * @param ?array<string, StorageItem> &$frame frame to add item to
      * @param string $name name of the item
      * @param StorageItem $item item to be stored
      */
     private function addItem(
-        array &$frame,
+        ?array &$frame,
         string $name,
         StorageItem $item
     ): void {
@@ -234,7 +234,12 @@ class Storage {
         $frame[$name] = $item;
     }
 
-    private function defItem(array &$frame, string $name) {
+    /**
+     * Defines item in the given frame
+     * @param ?array<string, StorageItem> &$frame frame to define item in
+     * @param string $name name of the item
+     */
+    private function defItem(?array &$frame, string $name): void {
         if (!isset($frame))
             throw new FrameAccessException();
         if (isset($frame[$name]))
@@ -245,11 +250,11 @@ class Storage {
 
     /**
      * Gets item from the given frame
-     * @param array &$frame frame to get item from
+     * @param ?array<string, StorageItem> &$frame frame to get item from
      * @param string $name name of the item
      * @return StorageItem item from the storage
      */
-    public function getItem(array &$frame, string $name): StorageItem {
+    public function getItem(?array &$frame, string $name): StorageItem {
         if (!isset($frame))
             throw new FrameAccessException();
         if (!isset($frame[$name]))
